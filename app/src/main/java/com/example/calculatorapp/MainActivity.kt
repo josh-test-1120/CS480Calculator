@@ -55,8 +55,6 @@ import kotlin.math.log10
 import kotlin.math.sqrt
 import kotlin.math.tan
 
-
-
 /**
  * This is the main activity class that drives the UI
  * extends the ComponentActivity
