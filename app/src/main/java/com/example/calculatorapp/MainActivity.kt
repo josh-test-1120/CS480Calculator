@@ -974,7 +974,7 @@ fun toPrefix(expression: String,
             // Otherwise we capture the number, encode it, and add to operands
             else {
                 operands.push("'" + number.joinToString("") + "'")
-                number = emptyArray<Char>()
+                number = emptyArray<Char>() // reset number array
             }
         // Bracket cases
         } else if (c == '}') {
@@ -1148,6 +1148,7 @@ fun evalOperator(operators: Stack<Char>, operands: Stack<String>) {
  */
 fun evaluatePN(prefix: String,
                showToast: (String) -> Unit): Double {
+    // Variables
     val stack = Stack<Double>()
     val unaryOps = listOf('s', 'c', 't', 'o', 'l', 'g', 'n', 'q')
     var number = emptyArray<Char>()
@@ -1163,8 +1164,6 @@ fun evaluatePN(prefix: String,
         }
         // Already working on operand, so capture the rest
         else if (numstart) {
-            println("This is the current number: ${number.joinToString("")}")
-            println("This is the current char: ${c.toString()}")
             if (c == '\'') {
                 stack.push(number.joinToString("").toDouble())
                 //println("This is the number: ${number.joinToString("")}")
@@ -1187,16 +1186,12 @@ fun evaluatePN(prefix: String,
                     'q' -> stack.push(sqrt(a))
                     'n' -> stack.push(a.toDouble() * -1)
                 }
-                println("This is the current value of evaluation: ${stack.peek()}")
-                println("This is the current evaluation stack: " +
-                        "${stack.toArray().joinToString(",")}")
             // Handle exceptions
             } catch (e: Exception) {
                 showToast("There is an invalid operation specified")
                 println("This is the invalid operation exception: ${e.toString()}")
                 throw java.lang.Exception("There is an invalid operation specified")
             }
-
         }
         // Handle binary operators
         else {
@@ -1210,13 +1205,12 @@ fun evaluatePN(prefix: String,
                     '/' -> stack.push(a / b)
                     '^' -> stack.push(a.toDouble().pow(b.toDouble()))
                 }
-                println("This is the current value of evaluation: ${stack.peek()}")
             // Handle exceptions
             } catch (e: Exception) {
                 showToast("There is an invalid operation specified")
+                println("This is the invalid operation exception: ${e.toString()}")
                 throw java.lang.Exception("There is an invalid operation specified")
             }
-
         }
     }
     return stack.pop()
