@@ -5,9 +5,9 @@ that you are running Android Studio Iguana | 2023.2.1 RC 2 for compatibility pur
 might not work properly with all libraries).
 
 Android Studio Versions:
-[Mac OSx Silicon](https://redirector.gvt1.com/edgedl/android/studio/install/2023.2.1.22/android-studio-2023.2.1.22-mac_arm.dmg)
-[Mac OSx Intel](https://redirector.gvt1.com/edgedl/android/studio/install/2023.2.1.22/android-studio-2023.2.1.22-mac.dmg)
-[Windows Intel](https://redirector.gvt1.com/edgedl/android/studio/install/2023.2.1.22/android-studio-2023.2.1.22-windows.exe)
+- [Mac OSx Silicon](https://redirector.gvt1.com/edgedl/android/studio/install/2023.2.1.22/android-studio-2023.2.1.22-mac_arm.dmg)
+- [Mac OSx Intel](https://redirector.gvt1.com/edgedl/android/studio/install/2023.2.1.22/android-studio-2023.2.1.22-mac.dmg)
+- [Windows Intel](https://redirector.gvt1.com/edgedl/android/studio/install/2023.2.1.22/android-studio-2023.2.1.22-windows.exe)
 
 Do not auto-update the version of Android studio once you launch it, even though it asks you to. This 
 is needed to ensure compatibility with the build and implementation I used for this project.
