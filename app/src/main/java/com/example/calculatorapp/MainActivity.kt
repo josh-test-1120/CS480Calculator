@@ -1200,7 +1200,7 @@ fun evaluatePN(prefix: String,
                     '-' -> stack.push(a - b)
                     '*' -> stack.push(a * b)
                     '/' -> stack.push(a / b)
-                    '^' -> stack.push(a.toDouble().pow(b.toDouble()))
+                    '^' -> stack.push(a.pow(b))
                 }
             // Handle exceptions
             } catch (e: Exception) {
