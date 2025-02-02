@@ -98,8 +98,8 @@ fun Calculator(style: String, modifier: Modifier = Modifier) {
         // Create references for the composables to constrain
         val (viewBox, buttonBox) = createRefs()
         // Author details
-        var author = "Summers"
-        var cwuid ="49933065"
+        var author = "Doe"
+        var cwuid ="XXXXXXXX"
         // Create the state for mutable text fields
         var viewText by rememberSaveable { mutableStateOf(author) }
         var sumText by rememberSaveable { mutableStateOf(cwuid) }
