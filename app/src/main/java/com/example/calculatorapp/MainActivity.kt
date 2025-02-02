@@ -201,7 +201,6 @@ fun SummationBox(values: String) {
  * @param viewText This is the current value of the view Text
  * @param author This is the current value of the author
  * @param viewTextOnChange This is the callback function that updates view Text
- * @param viewTextOnChange This is the callback function that updates view Text
  */
 @Composable
 fun ButtonsRow1(viewText: String, author: String, viewTextOnChange: ((String) -> Unit) = {}) {
@@ -1043,10 +1042,10 @@ fun toPrefix(expression: String,
 }
 
 /**
- * This is the to evalOperator function
- * This will determine if an operator is unary or binary
- * @param operators This is the operators stack to use
- * @param operands This is the operands stack to use
+ * This is the to showError function
+ * This will handle errors and hoist the toast with callback
+ * @param expression This is the expression to reference
+ * @param charType This is the type of character to error on
  * @param index This is the index of the error
  * @param showToast This is the showToast callback
  */
