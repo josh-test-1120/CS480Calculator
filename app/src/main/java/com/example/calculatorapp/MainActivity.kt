@@ -926,7 +926,7 @@ fun toPrefix(expression: String,
         '*' to 2, '/' to 2,
         '^' to 3,
         's' to 4, 'c' to 4, 't' to 4, 'o' to 4,
-        'l' to 5, 'g' to 5,
+        'l' to 5, 'g' to 5, 'q' to 5,
         'n' to 6,
     )
     // Initial words and number character arrays
