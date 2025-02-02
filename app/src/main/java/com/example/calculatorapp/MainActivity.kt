@@ -1181,7 +1181,7 @@ fun evaluatePN(prefix: String,
                     'l' -> stack.push(ln(a))
                     'g' -> stack.push(log10(a))
                     'q' -> stack.push(sqrt(a))
-                    'n' -> stack.push(a.toDouble() * -1)
+                    'n' -> stack.push(a * -1)
                 }
             // Handle exceptions
             } catch (e: Exception) {
