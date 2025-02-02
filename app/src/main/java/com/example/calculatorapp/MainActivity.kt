@@ -54,7 +54,6 @@ import kotlin.math.ln
 import kotlin.math.log10
 import kotlin.math.sqrt
 import kotlin.math.tan
-import kotlin.math.tanh
 
 
 
@@ -1180,7 +1179,7 @@ fun evaluatePN(prefix: String,
                     's' -> stack.push(sin(a))
                     'c' -> stack.push(cos(a))
                     't' -> stack.push(tan(a))
-                    'o' -> stack.push(tanh(a))
+                    'o' -> stack.push(1/tan(a))
                     'l' -> stack.push(ln(a))
                     'g' -> stack.push(log10(a))
                     'q' -> stack.push(sqrt(a))
