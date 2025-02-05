@@ -859,8 +859,8 @@ fun ButtonsRow6(viewText: String, sums: String, author: String,
             onClick = {
                 try {
                     // Covert the expression to PN
-                    val expr_pn = toPrefix(viewText, showToast);
-
+                    val expr_pn = toPrefix(viewText, showToast)
+                    // Evaluate the PN
                     val expr_value = evaluatePN(expr_pn, showToast)
 
                     // Truncates the result to 12 digits to fit the Summation Box
