@@ -978,6 +978,10 @@ fun toPrefix(expression: String,
         } else if (c == '}') {
             operators.push(c)
         } else if (c == '{') {
+            if (nextc == '}') {
+                showToast("Bracket operator error")
+                break
+            }
             while (!operators.isEmpty() && operators.peek() != '}') {
                 evalOperator(operators, operands)
             }
@@ -988,13 +992,17 @@ fun toPrefix(expression: String,
             catch (e: Exception) {
                 if (operators.isEmpty()) {
                     showError(expression, "bracket", i, showToast=showToast)
-                    break;
+                    break
                 }
             }
         // Parenthesis cases
         } else if (c == ')') {
             operators.push(c)
         } else if (c == '(') {
+            if (nextc == ')') {
+                showToast("Parenthesis operator error")
+                break
+            }
             while (!operators.isEmpty() && operators.peek() != ')') {
                 evalOperator(operators, operands)
             }
