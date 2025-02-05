@@ -918,6 +918,8 @@ fun toPrefix(expression: String,
     // Variables
     val operators = Stack<Char>()
     val operands = Stack<String>()
+    // Empty PN
+    val emptyPN = "+'0''0'"
     // Dictionaries of operators
     val precedence = mapOf(
         '+' to 1, '-' to 1,
@@ -978,9 +980,9 @@ fun toPrefix(expression: String,
         } else if (c == '}') {
             operators.push(c)
         } else if (c == '{') {
-            if (nextc == '}') {
+            if (nextc == '}' || !precedence.contains(nextc)) {
                 showToast("Bracket operator error")
-                break
+                return emptyPN
             }
             while (!operators.isEmpty() && operators.peek() != '}') {
                 evalOperator(operators, operands)
@@ -999,9 +1001,9 @@ fun toPrefix(expression: String,
         } else if (c == ')') {
             operators.push(c)
         } else if (c == '(') {
-            if (nextc == ')') {
+            if (nextc == ')' || !precedence.contains(nextc)) {
                 showToast("Parenthesis operator error")
-                break
+                return emptyPN
             }
             while (!operators.isEmpty() && operators.peek() != ')') {
                 evalOperator(operators, operands)
