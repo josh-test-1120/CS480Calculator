@@ -870,12 +870,13 @@ fun ButtonsRow6(viewText: String, sums: String, author: String,
                         showToast("Evaluation is NaN. Error in expression.")
                         throw Exception("Evaluation is NaN. Error in expression.")
                     }
-                    else sumTextOnChange(result);
+                    else sumTextOnChange(result)
                     System.out.println("This is the result: $result")
                 }
                 // Does nothing except log the error
                 catch (e: Exception) {
-                    System.out.println("Error: $e");
+                    System.out.println("Error: $e")
+                    showToast("Unknown error: ${e.message}")
                 }
             },
             shape = RoundedCornerShape(50),
