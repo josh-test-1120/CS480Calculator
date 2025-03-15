@@ -64,21 +64,6 @@ class ExpressionBuilderStateMachine {
     private var currentExpressionState: ExpressionState = ExpressionState.Start
     private var currentExponentState: ExponentState = ExponentState.Start
 
-    // Dictionaries of precedence and mappings
-    private val precedence = mapOf(
-        '+' to 1, '-' to 1,
-        '*' to 2, '/' to 2,
-        '^' to 3,
-        's' to 4, 'c' to 4, 't' to 4, 'o' to 4,
-        'l' to 5, 'g' to 5, 'q' to 5,
-        'n' to 6,
-    )
-    private val specialOperators = mapOf(
-        's' to "sin", 'c' to "cos",
-        't' to "tan", 'o' to "cot",
-        'l' to "ln", 'g' to "log",
-        'q' to "sqrt",
-    )
     // List of operators
     private val numbers = listOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
     private val unaryOperators = listOf("sin", "cos", "tan", "cot", "ln", "log", "sqrt", "-")
@@ -92,12 +77,7 @@ class ExpressionBuilderStateMachine {
     var exponent = ""
     val builderCycles = 100
 
-    private var parenthesisCount = 0
-    private var bracketCount = 0
     private var groupingStack = ArrayDeque<Char>()
-
-    private var expParenthesisCount = 0
-    private var expBracketCount = 0
     private var expGroupingStack = ArrayDeque<Char>()
 
     /** Expression Transition Map
@@ -156,22 +136,17 @@ class ExpressionBuilderStateMachine {
         NumberState.End to emptyList() // No transitions from End
     )
 
-    fun getCurrentNumberState(): NumberState {
-        return currentNumberState
-    }
-
-    fun getCurrentExpressionState(): ExpressionState {
-        return currentExpressionState
-    }
-
-    fun getCurrentExponentState(): ExponentState {
-        return currentExponentState
-    }
-
+    /**
+     * This will set the Expression state machine
+     * to cleanup
+     */
     fun setCurrentExpressionCleanup() {
          currentExpressionState = ExpressionState.Cleanup
     }
 
+    /**
+     * This will transition the Number state machine
+     */
     fun transitionNumberState() {
         val possibleNextNumberStates = numberTransitions[currentNumberState] ?: throw IllegalStateException("Invalid state: $currentNumberState")
         if (possibleNextNumberStates.isEmpty()) {
@@ -181,6 +156,9 @@ class ExpressionBuilderStateMachine {
         }
     }
 
+    /**
+     * This will transition the Expression state machine
+     */
     fun transitionExpressionState() {
         val possibleNextExpressionStates = expressionTransitions[currentExpressionState] ?: throw IllegalStateException("Invalid state: $currentExpressionState")
         if (possibleNextExpressionStates.isEmpty()) {
@@ -190,6 +168,9 @@ class ExpressionBuilderStateMachine {
         }
     }
 
+    /**
+     * This will transition the Exponent state machine
+     */
     fun transitionExponentState() {
         val possibleNextExponentStates = exponentTransitions[currentExponentState] ?: throw IllegalStateException("Invalid state: $currentExponentState")
         if (possibleNextExponentStates.isEmpty()) {
@@ -199,24 +180,31 @@ class ExpressionBuilderStateMachine {
         }
     }
 
+    /**
+     * This will process the Number state
+     * from the Number state machine
+     */
     fun processNumberState() {
         // Cases for states
         when (currentNumberState) {
+            // Number start state
             NumberState.Start -> {
-                //println("Number Start State")
                 transitionNumberState()
             }
+            // Generate a number
             NumberState.Number -> {
                 val randomNumber = numbers[Random.nextInt(numbers.size)]
                 expression += randomNumber
                 number += randomNumber
                 transitionNumberState()
             }
+            // Generate a decimal
             NumberState.Decimal -> {
                 expression += decimal
                 number += decimal
                 transitionNumberState()
             }
+            // Generate a number after decimal
             NumberState.NumberAfterDecimal -> {
                 val randomNumber = numbers[Random.nextInt(numbers.size)]
                 expression += randomNumber
@@ -228,27 +216,25 @@ class ExpressionBuilderStateMachine {
         }
     }
 
+    /**
+     * This will process the Expression state
+     * from the Expression state machine
+     */
     fun processExpressionState() {
-        //println("This is the expression state: ${currentExpressionState.toString()}")
         // Cases for states
         when (currentExpressionState) {
             // Expression start state
             ExpressionState.Start -> {
-                //println("Expression Start State")
                 transitionExpressionState()
             }
             // Generate a number
             ExpressionState.Number -> {
                 number = buildNumber()
-                //println("This is the number: $number")
-                //println("This is the expression: $expression")
                 transitionExpressionState()
             }
             // Numbers that are after unary operators
             ExpressionState.NumberAfterUnary -> {
                 number = buildNumber()
-                //println("This is the unary number: $number")
-                //println("This is the expression: $expression")
                 transitionExpressionState()
             }
             // Generate a binary operator
@@ -271,9 +257,11 @@ class ExpressionBuilderStateMachine {
                 groupingStack.addLast(')')
                 transitionExpressionState()
             }
+            // Handle clean transition from Exponent state
             ExpressionState.ExponentOperator -> {
                 transitionExpressionState()
             }
+            // Generate an open parenthesis
             ExpressionState.OpenParenthesis -> {
                 expression += "("
                 groupingStack.addLast(')')
@@ -284,6 +272,7 @@ class ExpressionBuilderStateMachine {
                 closeGrouping()
                 transitionExpressionState()
             }
+            // Generate an open bracket
             ExpressionState.OpenBracket -> {
                 expression += "{"
                 groupingStack.addLast('}')
@@ -300,8 +289,6 @@ class ExpressionBuilderStateMachine {
                 while (!groupingStack.isEmpty()) {
                     val closure = groupingStack.removeLast()
                     expression += closure
-                    //println("This is the closure count: ${groupingStack.size}")
-                    //println("This is the current expression: $expression")
                 }
                 transitionExpressionState()
             }
@@ -459,7 +446,6 @@ class ExpressionBuilderStateMachine {
         transformedExp = transformedExp.replace('}', ')')
 
         transformedExp = exponentFormat(transformedExp)
-        //println("This is the exponent expression adjusted: $transformedExp")
 
         return transformedExp
     }
@@ -474,9 +460,7 @@ class ExpressionBuilderStateMachine {
         // Build the number
         while (currentNumberState != NumberState.End) {
             processNumberState()
-            //transitionNumberState()
         }
-        //transitionNumberState()
         return number
     }
 
@@ -491,10 +475,8 @@ class ExpressionBuilderStateMachine {
         // Build the number
         while (currentExponentState != ExponentState.End) {
             processExponentState()
-            //println("This is the current exponent string: $exponent")
         }
-        //transitionNumberState()
-        //println("This is the final exponent string: $exponent")
+        // Return the exponent
         return exponent
     }
 
@@ -512,14 +494,14 @@ class ExpressionBuilderStateMachine {
             context.optimizationLevel = -1
             var scriptable = context.initStandardObjects()
             // Add Math functions to the scope
-            val mathCos = "var cos = function(x) { return java.lang.Math.cos(x); };"         // Cosine function
+            val mathCos = "var cos = function(x) { return java.lang.Math.cos(x); };"           // Cosine function
             val mathSin = "var sin =  function(x) { return java.lang.Math.sin(x); };"          // Sine function
-            val mathTan = "var tan = function(x) { return java.lang.Math.tan(x); };"          // Tangent function
-            val mathCot = "var cot = function(x) { return 1/java.lang.Math.tan(x); };"        // Cotangent function
-            val mathLog = "var log = function(x) { return java.lang.Math.log10(x); };"      // Base-10 logarithm
-            val mathLn = "var ln = function(x) { return java.lang.Math.log(x); };"            // Natural logarithm (ln)
-            val mathExp = "var pow = function(x, y) { return java.lang.Math.pow(x, y); };"    // Exponentiation (x^y)
-            val mathSqrt = "var sqrt = function(x) { return java.lang.Math.sqrt(x); };"       // Square root
+            val mathTan = "var tan = function(x) { return java.lang.Math.tan(x); };"           // Tangent function
+            val mathCot = "var cot = function(x) { return 1/java.lang.Math.tan(x); };"         // Cotangent function
+            val mathLog = "var log = function(x) { return java.lang.Math.log10(x); };"         // Base-10 logarithm
+            val mathLn = "var ln = function(x) { return java.lang.Math.log(x); };"             // Natural logarithm (ln)
+            val mathExp = "var pow = function(x, y) { return java.lang.Math.pow(x, y); };"     // Exponentiation (x^y)
+            val mathSqrt = "var sqrt = function(x) { return java.lang.Math.sqrt(x); };"        // Square root
             // Insert code into context for math functions
             context.evaluateString(scriptable, mathCos, "MathJS", 1, null)
             context.evaluateString(scriptable, mathSin, "MathJS", 2, null)
@@ -543,15 +525,19 @@ class ExpressionBuilderStateMachine {
         return result
     }
 
+    /**
+     * Randomize the characters
+     * to generate bad expressions
+     */
     fun randomizeCharacters(): String {
         // Variables
         var badString = expression.toCharArray()
 
         // Randomize 5% of the characters as bad
-        val randomRatio = ceil(builderCycles * .05)
+        val randomRatio = .05
 
         for (x in 0..builderCycles) {
-            if (x == ceil(builderCycles * .05).toInt())
+            if (x == ceil(builderCycles * randomRatio).toInt())
                 badString[x] = badCharacters[Random.nextInt(badCharacters.size)]
         }
 
@@ -573,6 +559,11 @@ class ExampleUnitTest {
         assertEquals(4, 2 + 2)
     }
 
+    /**
+     * Generate expressions and test them out
+     * will generate good and bad expressions
+     * and test based on the number of tests defined in the Unit test
+     */
     @Test
     fun expressionTest() {
         // Variables for tests
@@ -589,7 +580,6 @@ class ExampleUnitTest {
 
         // Split the list into two halves
         val firstHalf = tests - midpoint
-        val secondHalf = tests - firstHalf
 
         println("Generating $tests expressions...");
 
