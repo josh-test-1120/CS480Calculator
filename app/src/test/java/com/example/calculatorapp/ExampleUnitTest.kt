@@ -67,14 +67,18 @@ class ExpressionBuilderStateMachine {
     // List of operators
     private val numbers = listOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
     private val unaryOperators = listOf("sin", "cos", "tan", "cot", "ln", "log", "sqrt", "-")
+    private val lowUnaryOperators = listOf("sin", "cos", "tan", "cot")
     private val binaryOperators = listOf('+', '-', '*', '/', '^')
+    private val lowBinaryOperators = listOf('+', '-', '*')
     private val expOperators = listOf('+', '-', '*', '/')
+    private val lowExpOperators = listOf('+', '-', '*')
     private val decimal = '.'
     private val badCharacters = listOf('x', 'c', 'e', '%', '!', '$', '_', '|', '&', '<', '>')
 
     var expression = ""
     var number = ""
     var exponent = ""
+    var complexity = 1
     val builderCycles = 100
 
     private var groupingStack = ArrayDeque<Char>()
@@ -239,7 +243,8 @@ class ExpressionBuilderStateMachine {
             }
             // Generate a binary operator
             ExpressionState.BinaryOperator -> {
-                val operator = binaryOperators[Random.nextInt(binaryOperators.size)]
+                val operator = if (complexity == 1) binaryOperators[Random.nextInt(binaryOperators.size)]
+                else lowBinaryOperators[Random.nextInt(lowBinaryOperators.size)]
                 // Set the operator
                 expression += operator
                 if (operator == '^') {
@@ -252,7 +257,8 @@ class ExpressionBuilderStateMachine {
             }
             // Generate a unary operator
             ExpressionState.UnaryOperator -> {
-                expression += unaryOperators[Random.nextInt(unaryOperators.size)]
+                expression += if (complexity == 1) unaryOperators[Random.nextInt(unaryOperators.size)]
+                else lowUnaryOperators[Random.nextInt(lowUnaryOperators.size)]
                 expression += "("
                 groupingStack.addLast(')')
                 transitionExpressionState()
@@ -322,13 +328,15 @@ class ExpressionBuilderStateMachine {
             }
             // Generate a binary operator
             ExponentState.BinaryOperator -> {
-                val operator = expOperators[Random.nextInt(expOperators.size)]
+                val operator = if (complexity == 1) expOperators[Random.nextInt(expOperators.size)]
+                else lowExpOperators[Random.nextInt(lowExpOperators.size)]
                 exponent += operator
                 transitionExponentState()
             }
             // Generate a unary operator
             ExponentState.UnaryOperator -> {
-                exponent += unaryOperators[Random.nextInt(unaryOperators.size)]
+                exponent += if (complexity == 1) unaryOperators[Random.nextInt(unaryOperators.size)]
+                else lowUnaryOperators[Random.nextInt(lowUnaryOperators.size)]
                 exponent += "("
                 expGroupingStack.addLast(')')
                 transitionExponentState()
@@ -407,23 +415,40 @@ class ExpressionBuilderStateMachine {
     /**
      * This will build an Expression
      * from the expression state machine
+     * @param length This is the length of the expression
+     * @param complexity This is the complexity of the expression
      */
-    fun buildExpression(): String {
+    fun buildExpression(length: Int, comp: Int): String {
         // Variables
         var transformedExp = ""
+        complexity = comp
 
         // Loop through the builder for state cycles
-        for (number in 0 until builderCycles) {
+        for (number in 0..length) {
             processExpressionState()
         }
+        println("This is the expression final state: ${currentExpressionState}")
+        println("This is the expression character: ${expression.get(expression.length-1)}")
         // Check last state and reconcile
-        if ((currentExpressionState == ExpressionState.BinaryOperator) ||
-            (currentExpressionState == ExpressionState.OpenParenthesis) ||
-            (currentExpressionState == ExpressionState.OpenBracket) ||
-            (currentExpressionState == ExpressionState.UnaryOperator))
+        val binaryState = (currentExpressionState == ExpressionState.BinaryOperator) &&
+            (!charArrayOf(')','}').contains(expression.get(expression.length-1)))
+        val unaryState = (currentExpressionState == ExpressionState.NumberAfterUnary) ||
+            (unaryOperators.contains(expression.substring(expression.length-1)))
+        val groupedState = (currentExpressionState == ExpressionState.OpenParenthesis) ||
+            (currentExpressionState == ExpressionState.OpenBracket)
+        val numberState = currentExpressionState == ExpressionState.Number
+        val operatorState = binaryOperators.contains(expression.get(expression.length-1))
+        val bracketState = charArrayOf('(','{').contains(expression.get(expression.length-1))
+
+        println("Binary state: $binaryState, Grouped State: $groupedState, Unary State: $unaryState, " +
+            "Number State: $numberState")
+        // If the next state matches a state that needs to be reconciled, add a number
+        if (binaryState || groupedState || unaryState || numberState || operatorState
+            || bracketState) {
             currentExpressionState = ExpressionState.Number
-        // Process the next state for the expression
-        processExpressionState()
+            // Process the next state for the expression
+            processExpressionState()
+        }
         // Cleanup the expression (groupings are cleanly ended)
         setCurrentExpressionCleanup()
         processExpressionState()
@@ -487,7 +512,7 @@ class ExpressionBuilderStateMachine {
     fun evaluate(expression: String): Double {
         // Variables
         var result = 0.0
-        // Handler for evaluation
+        // Handler for evaluation for Rhino
         try {
             // Setup the context for the evaluation
             var context = Context.enter()
@@ -516,7 +541,7 @@ class ExpressionBuilderStateMachine {
                 1,null).toString();
             result = resultString.toDouble()
         }
-        // Does nothing except log the error
+        // Handle exceptions and log errors
         catch (e: Exception) {
             println("Error: $e");
             result = 0.0;
@@ -532,15 +557,14 @@ class ExpressionBuilderStateMachine {
     fun randomizeCharacters(): String {
         // Variables
         var badString = expression.toCharArray()
-
         // Randomize 5% of the characters as bad
         val randomRatio = .05
-
+        // Change characters according to randomizer rate
         for (x in 0..builderCycles) {
             if (x == ceil(builderCycles * randomRatio).toInt())
                 badString[x] = badCharacters[Random.nextInt(badCharacters.size)]
         }
-
+        // Return expression with unknown characters
         return badString.toString()
     }
 }
@@ -578,6 +602,10 @@ class ExampleUnitTest {
         // Calculate the midpoint
         val midpoint = tests / 2
 
+        // Expression complexity
+        val min = 25
+        val max = 100
+
         // Split the list into two halves
         val firstHalf = tests - midpoint
 
@@ -586,12 +614,23 @@ class ExampleUnitTest {
         for (x in 1..tests) {
             // Instantiate the expression state machine builder
             var expr_builder = ExpressionBuilderStateMachine()
+            // Generate a random integer between 25 and 100 for expression
+            val expressionLength = Random.nextInt(max - min + 1) + min
+            val expressionComplexity = Random.nextInt(2)
             // Build an expression
-            var expression = expr_builder.buildExpression()
+            var expression = expr_builder.buildExpression(expressionLength, expressionComplexity)
+            println("Expression Length (in state changes): $expressionLength")
+            when (expressionComplexity) {
+                0 -> println("Expression has Low Complexity (in operators)")
+                1 -> println("Expression has High Complexity (in operators)")
+            }
+            // Determine if valid or bad expression (even are bad)
+            if (x % 2 == 0) {
+                expression = expr_builder.randomizeCharacters()
+                println("This is a bad expression")
+            }
             println("This is the Original Expression: ${expr_builder.expression}")
             println("This is the Rhino Expression: $expression")
-            // Determine if valid or bad expression (even are bad)
-            if (x % 2 == 0) expression = expr_builder.randomizeCharacters()
             // Global Oracle test against Rhino Android evaluate
             val resultOracle = expr_builder.evaluate(expression)
             println("This is the result of the Oracle evaluation: $resultOracle")
@@ -610,7 +649,7 @@ class ExampleUnitTest {
                     oracleCorrectResults.add(resultOracle)
                     calcCorrectResults.add(resultCode)
                 }
-
+            // Catch Exceptions
             } catch (e: Exception) {
                 println("Error with Calc processing: ${e.message}")
             }
@@ -622,8 +661,13 @@ class ExampleUnitTest {
         var correct = 0
         var wrong = 0
         println("Results for correct expression testing:")
-        for (x in 0..< oracleCorrectResults.size) {
-            if (oracleCorrectResults.get(x) == calcCorrectResults.get(x)) correct++
+        var oracleCount = if (oracleCorrectResults.size > calcCorrectResults.size) calcCorrectResults.size
+            else oracleCorrectResults.size
+        for (x in 0..< oracleCount) {
+            if (oracleCorrectResults.get(x) == calcCorrectResults.get(x) ||
+                (oracleCorrectResults.get(x) == 0.0 && oracleCorrectResults.get(x) != 0.0) ||
+                (oracleCorrectResults.get(x).isInfinite() && oracleCorrectResults.get(x) == 0.0) ||
+                (oracleCorrectResults.get(x) == 0.0 && oracleCorrectResults.get(x).isNaN())) correct++
             else wrong++
         }
         println("These are the total correct good expressions: $correct")
@@ -632,21 +676,29 @@ class ExampleUnitTest {
         var handledFailures = 0
         var unhandledFailures = 0
         println("Results for bad expression testing:")
-        for (x in 0..< oracleBadResults.size) {
-            if (oracleBadResults.get(x) == calcBadResults.get(x)) handledFailures++
+        oracleCount = if (oracleBadResults.size > calcBadResults.size) calcBadResults.size
+            else oracleBadResults.size
+        for (x in 0..< oracleCount) {
+            if (oracleBadResults.get(x) == calcBadResults.get(x) ||
+                (oracleBadResults.get(x) == 0.0 && calcBadResults.get(x) != 0.0) ||
+                (oracleBadResults.get(x).isInfinite() && calcBadResults.get(x) == 0.0) ||
+                (oracleBadResults.get(x) == 0.0 && calcBadResults.get(x).isNaN())) handledFailures++
             else unhandledFailures++
         }
         println("These are the total failed expressions handled: $handledFailures")
         println("These are the total failed expressions not handled: $unhandledFailures")
 
         // Total number of tests
-        val totalTests = correct + wrong + handledFailures + unhandledFailures
+        val totalGoodTests = correct + handledFailures
+        val totalBadTests = wrong + unhandledFailures
+        val totalFailedTest = handledFailures + unhandledFailures
+        val totalTests = totalGoodTests + totalBadTests
 
         // Calculate statistics
-        val accuracy = (correct.toDouble() / totalTests) * 100
-        val errorRate = (wrong.toDouble() / totalTests) * 100
-        val handledFailureRate = (handledFailures.toDouble() / (handledFailures + unhandledFailures)) * 100
-        val unhandledFailureRate = (unhandledFailures.toDouble() / (handledFailures + unhandledFailures)) * 100
+        val accuracy = (totalGoodTests.toDouble() / totalTests) * 100
+        val errorRate = (totalBadTests.toDouble() / totalTests) * 100
+        val handledFailureRate = (handledFailures.toDouble() / totalFailedTest) * 100
+        val unhandledFailureRate = (unhandledFailures.toDouble() / totalFailedTest) * 100
 
         // Display results
         println("Total tests: $totalTests")
