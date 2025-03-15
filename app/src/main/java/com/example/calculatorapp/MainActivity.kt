@@ -54,6 +54,7 @@ import kotlin.math.ln
 import kotlin.math.log10
 import kotlin.math.sqrt
 import kotlin.math.tan
+import kotlin.random.Random
 
 /**
  * This is the main activity class that drives the UI
@@ -860,6 +861,8 @@ fun ButtonsRow6(viewText: String, sums: String, author: String,
                 try {
                     // Covert the expression to PN
                     val expr_pn = toPrefix(viewText, showToast)
+                    println("This is the original expression: ${viewText}")
+                    println("This is the expression coded as PN: ${expr_pn}")
                     // Evaluate the PN
                     val expr_value = evaluatePN(expr_pn, showToast)
 
@@ -1099,7 +1102,7 @@ fun showError(expression: String, charType: String, index: Int,
 fun evalOperator(operators: Stack<Char>, operands: Stack<String>) {
     // Sanity checks of stacks
     if (!operators.isEmpty() && !operands.isEmpty()) {
-        // List of uniary operators
+        // List of unary operators
         val unaryOps = listOf('s', 'c', 't', 'o', 'l', 'g')
         val unaryChecks = listOf('(', ')', '{', '}', '+', '-', '*', '/', '^')
         var unaryType: Boolean = false
@@ -1155,7 +1158,7 @@ fun evalOperator(operators: Stack<Char>, operands: Stack<String>) {
  * @return evaluated value for decoded expression
  */
 fun evaluatePN(prefix: String,
-               showToast: (String) -> Unit): Double {
+               showToast: ((String) -> Unit) = {}): Double {
     // Variables
     val stack = Stack<Double>()
     val unaryOps = listOf('s', 'c', 't', 'o', 'l', 'g', 'n', 'q')
@@ -1223,6 +1226,37 @@ fun evaluatePN(prefix: String,
     }
     return stack.pop()
 }
+
+/**
+ * This is the to decode and evaluate polish notation expression
+ * This is needed to ensure the expression can be decoded and evaluated
+ * @param prefix This is string to decode and evaluate
+ * @param showToast This is the showToast callback
+ * @return evaluated value for decoded expression
+ */
+fun createExpressions(tests: Int): Double {
+    // Dictionaries of operators
+    val precedence = mapOf(
+        '+' to 1, '-' to 1,
+        '*' to 2, '/' to 2,
+        '^' to 3,
+        's' to 4, 'c' to 4, 't' to 4, 'o' to 4,
+        'l' to 5, 'g' to 5, 'q' to 5,
+        'n' to 6,
+    )
+
+    val specialOperators = mapOf(
+        's' to "sin", 'c' to "cos",
+        't' to "tan", 'o' to "cot",
+        'l' to "ln", 'g' to "log",
+        'q' to "sqrt",
+    )
+
+    // State Machines for expression generation
+
+    return 0.0;
+               }
+
 
 /**
  * This is the Main preview function composable
