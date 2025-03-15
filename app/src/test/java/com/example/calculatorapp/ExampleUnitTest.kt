@@ -223,6 +223,7 @@ class ExpressionBuilderStateMachine {
                 number += randomNumber
                 transitionNumberState()
             }
+            // Number End state
             NumberState.End -> {}
         }
     }
@@ -231,39 +232,39 @@ class ExpressionBuilderStateMachine {
         //println("This is the expression state: ${currentExpressionState.toString()}")
         // Cases for states
         when (currentExpressionState) {
+            // Expression start state
             ExpressionState.Start -> {
                 //println("Expression Start State")
                 transitionExpressionState()
             }
+            // Generate a number
             ExpressionState.Number -> {
                 number = buildNumber()
                 //println("This is the number: $number")
                 //println("This is the expression: $expression")
                 transitionExpressionState()
             }
+            // Numbers that are after unary operators
             ExpressionState.NumberAfterUnary -> {
                 number = buildNumber()
                 //println("This is the unary number: $number")
                 //println("This is the expression: $expression")
                 transitionExpressionState()
             }
+            // Generate a binary operator
             ExpressionState.BinaryOperator -> {
                 val operator = binaryOperators[Random.nextInt(binaryOperators.size)]
-
+                // Set the operator
                 expression += operator
                 if (operator == '^') {
                     expression += "("
-//                    closeAllGrouping()
-//                    expression = "pow(" + expression + ", "
                     expression += buildExponent()
                     expression += ")"
-                    //println("This is the expression: $expression")
-                    //Thread.sleep(1000)
                     currentExpressionState = ExpressionState.ExponentOperator
                 }
-                //else expression += operator
                 transitionExpressionState()
             }
+            // Generate a unary operator
             ExpressionState.UnaryOperator -> {
                 expression += unaryOperators[Random.nextInt(unaryOperators.size)]
                 expression += "("
@@ -278,6 +279,7 @@ class ExpressionBuilderStateMachine {
                 groupingStack.addLast(')')
                 transitionExpressionState()
             }
+            // Close out the next group closure
             ExpressionState.CloseParenthesis -> {
                 closeGrouping()
                 transitionExpressionState()
@@ -287,10 +289,12 @@ class ExpressionBuilderStateMachine {
                 groupingStack.addLast('}')
                 transitionExpressionState()
             }
+            // Close out the next group closure
             ExpressionState.CloseBracket -> {
                 closeGrouping()
                 transitionExpressionState()
             }
+            // Expression cleanup state
             ExpressionState.Cleanup -> {
                 //closeAllGrouping()
                 while (!groupingStack.isEmpty()) {
@@ -301,81 +305,91 @@ class ExpressionBuilderStateMachine {
                 }
                 transitionExpressionState()
             }
+            // Expression End State
             ExpressionState.End -> {}
         }
     }
 
+    /**
+     * This handles the processing for Exponent states
+     * used in the Exponent state machines
+     */
     fun processExponentState() {
-        //println("This is the exponent state: ${currentExponentState.toString()}")
         // Cases for states
         when (currentExponentState) {
+            // Exponent start state
             ExponentState.Start -> {
-                //println("Exponent Start State")
                 transitionExponentState()
             }
+            // Generate a number
             ExponentState.Number -> {
                 number = buildNumber()
                 exponent += number
-                //println("This is the number: $number")
-                //println("This is the exponent expression: $exponent")
                 transitionExponentState()
             }
+            // Numbers that are after unary operators
             ExponentState.NumberAfterUnary -> {
                 number = buildNumber()
                 exponent += number
-                //println("This is the unary number: $number")
-                //println("This is the exponent expression: $exponent")
                 transitionExponentState()
             }
+            // Generate a binary operator
             ExponentState.BinaryOperator -> {
                 val operator = expOperators[Random.nextInt(expOperators.size)]
                 exponent += operator
                 transitionExponentState()
             }
+            // Generate a unary operator
             ExponentState.UnaryOperator -> {
                 exponent += unaryOperators[Random.nextInt(unaryOperators.size)]
                 exponent += "("
                 expGroupingStack.addLast(')')
                 transitionExponentState()
             }
+            // Generate open parenthesis
             ExponentState.OpenParenthesis -> {
                 exponent += "("
                 expGroupingStack.addLast(')')
                 transitionExponentState()
             }
+            // Close out the next group closure
             ExponentState.CloseParenthesis -> {
                 closeExpGrouping()
                 transitionExponentState()
             }
+            // Generate an open bracket
             ExponentState.OpenBracket -> {
                 exponent += "{"
                 expGroupingStack.addLast('}')
                 transitionExponentState()
             }
+            // Close out the next group closure
             ExponentState.CloseBracket -> {
                 closeExpGrouping()
                 transitionExponentState()
             }
+            // Cleanup all closures
             ExponentState.Cleanup -> {
                 while (!expGroupingStack.isEmpty()) {
                     val closure = expGroupingStack.removeLast()
                     exponent += closure
-                    //println("This is the exponent closure count: ${expGroupingStack.size}")
-                    //println("This is the current exponent: $exponent")
                 }
                 transitionExponentState()
             }
+            // Exponent end state
             ExponentState.End -> {}
         }
     }
 
+    /**
+     * This will create nested pow functions
+     * to ensure compatibility with Oracle
+     */
     private fun exponentFormat(expression: String): String {
         // Find the index of the rightmost '^' operator
         val caretIndex = expression.indexOfLast { it == '^' }
-
         // Base case
         if (caretIndex == -1) return expression
-
         // Handle recursive cases
         // Split the expression into left (base) and right (exponent) parts
         val base = expression.substring(0, caretIndex).trim()
@@ -387,26 +401,30 @@ class ExpressionBuilderStateMachine {
         return "pow($transformedBase, $transformedExponent)"
     }
 
+    /**
+     * This will close an Expression
+     * from the expression state machine
+     */
     fun closeGrouping() {
-        if (!groupingStack.isEmpty()) {
-            //println("Grouping Stack size: ${groupingStack.size}")
-            expression += groupingStack.removeLast()
-        }
+        if (!groupingStack.isEmpty()) expression += groupingStack.removeLast()
     }
 
+    /**
+     * This will close an Exponent
+     * from the exponent state machine
+     */
     fun closeExpGrouping() {
-        if (!expGroupingStack.isEmpty()) {
-            //println("Exponent Grouping Stack size: ${expGroupingStack.size}")
-            //println(expGroupingStack.toString())
-            exponent += expGroupingStack.removeLast()
-        }
+        if (!expGroupingStack.isEmpty()) exponent += expGroupingStack.removeLast()
     }
 
+    /**
+     * This will build an Expression
+     * from the expression state machine
+     */
     fun buildExpression(): String {
         // Variables
         var transformedExp = ""
 
-        //println("Builder Generator")
         // Loop through the builder for state cycles
         for (number in 0 until builderCycles) {
             processExpressionState()
@@ -417,20 +435,22 @@ class ExpressionBuilderStateMachine {
             (currentExpressionState == ExpressionState.OpenBracket) ||
             (currentExpressionState == ExpressionState.UnaryOperator))
             currentExpressionState = ExpressionState.Number
+        // Process the next state for the expression
         processExpressionState()
-
-        //println("This is the remaining parenthesis: $parenthesisCount and brackets: $bracketCount")
         // Cleanup the expression (groupings are cleanly ended)
         setCurrentExpressionCleanup()
         processExpressionState()
-
+        // Transform the expression for Oracle
         transformedExp = transformOracle()
-
         // Return the expression
         return transformedExp
-
     }
 
+    /**
+     * This will transform the expression
+     * to ensure compatibility with Oracle library
+     * Changes exponent and removed brackets
+     */
     private fun transformOracle(): String {
         // Variable
         var transformedExp = ""
@@ -444,6 +464,10 @@ class ExpressionBuilderStateMachine {
         return transformedExp
     }
 
+    /**
+     * This will build a Number
+     * from the number state machine
+     */
     private fun buildNumber(): String {
         currentNumberState = NumberState.Start
         number = ""
@@ -456,6 +480,10 @@ class ExpressionBuilderStateMachine {
         return number
     }
 
+    /**
+     * This will build an Exponent
+     * from the exponent state machine
+     */
     private fun buildExponent(): String {
         expGroupingStack = ArrayDeque<Char>()
         currentExponentState = ExponentState.Start
@@ -470,16 +498,19 @@ class ExpressionBuilderStateMachine {
         return exponent
     }
 
+    /**
+     * This will evaluate the expression
+     * with the Rhino library as an Oracle
+     */
     fun evaluate(expression: String): Double {
         // Variables
         var result = 0.0
+        // Handler for evaluation
         try {
             // Setup the context for the evaluation
             var context = Context.enter()
             context.optimizationLevel = -1
             var scriptable = context.initStandardObjects()
-
-
             // Add Math functions to the scope
             val mathCos = "var cos = function(x) { return java.lang.Math.cos(x); };"         // Cosine function
             val mathSin = "var sin =  function(x) { return java.lang.Math.sin(x); };"          // Sine function
@@ -489,7 +520,7 @@ class ExpressionBuilderStateMachine {
             val mathLn = "var ln = function(x) { return java.lang.Math.log(x); };"            // Natural logarithm (ln)
             val mathExp = "var pow = function(x, y) { return java.lang.Math.pow(x, y); };"    // Exponentiation (x^y)
             val mathSqrt = "var sqrt = function(x) { return java.lang.Math.sqrt(x); };"       // Square root
-            // Insert code into context
+            // Insert code into context for math functions
             context.evaluateString(scriptable, mathCos, "MathJS", 1, null)
             context.evaluateString(scriptable, mathSin, "MathJS", 2, null)
             context.evaluateString(scriptable, mathTan, "MathJS", 3, null)
@@ -498,20 +529,17 @@ class ExpressionBuilderStateMachine {
             context.evaluateString(scriptable, mathLn, "MathJS", 6, null)
             context.evaluateString(scriptable, mathExp, "MathJS", 7, null)
             context.evaluateString(scriptable, mathSqrt, "MathJS", 8, null)
-
+            // Handle the oracle evaluation with Rhino
             var resultString = context.evaluateString(scriptable,expression,"Javascript",
                 1,null).toString();
             result = resultString.toDouble()
-            // Truncates the result to 12 digits to fit the Summation Box
-            //resultString = truncateString(resultString,12)
-            println("This is the result: $result")
-            //sumTextOnChange(result)
         }
         // Does nothing except log the error
         catch (e: Exception) {
             println("Error: $e");
             result = 0.0;
         }
+        // Return the evaluated result
         return result
     }
 
@@ -534,6 +562,8 @@ class ExpressionBuilderStateMachine {
 
 /**
  * Example local unit test, which will execute on the development machine (host).
+ * Will generate random expressions to test out the accuracy of the calculator
+ * on various expressions of differing length and complexity
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
@@ -546,11 +576,13 @@ class ExampleUnitTest {
     @Test
     fun expressionTest() {
         // Variables for tests
-        var oracleResults = mutableListOf<Double>()
-        var calcResults = mutableListOf<Double>()
+        var oracleCorrectResults = mutableListOf<Double>()
+        var calcCorrectResults = mutableListOf<Double>()
+        var oracleBadResults = mutableListOf<Double>()
+        var calcBadResults = mutableListOf<Double>()
 
         // Generate the expressions
-        val tests = 100;
+        val tests = 100000;
 
         // Calculate the midpoint
         val midpoint = tests / 2
@@ -565,95 +597,55 @@ class ExampleUnitTest {
             // Instantiate the expression state machine builder
             var expr_builder = ExpressionBuilderStateMachine()
             // Build an expression
-            val expression = expr_builder.buildExpression()
-            println("This is the expression built: $expression")
-            // Global Oracle test against Rhino Android evaluate
-            val resultOracle = expr_builder.evaluate(expression)
-            println("This is the result of the Oracle evaluation: $resultOracle")
-            try {
-                // Local evaluation of the expression
-                val pnExp = toPrefix(expr_builder.expression)
-                println("This is the Original Expression: ${expr_builder.expression}")
-                println("This is the PN Expression: $pnExp")
-                val resultCode = evaluatePN(pnExp)
-                println("This is the result of the Program evaluation: $resultCode")
-                // Capture the results
-                oracleResults.add(resultOracle)
-                calcResults.add(resultCode)
-            } catch (e: Exception) {
-                println("Error with Calc processing: ${e.message}")
-            }
-        }
-
-        // Output the results
-        var correct = 0
-        var wrong = 0
-        println("Calculating test results...")
-        //println("Size of oracle: ${oracleResults.size}")
-        //println("Size of calc: ${calcResults.size}")
-        for (x in 0..< oracleResults.size) {
-            if (oracleResults.get(x) == calcResults.get(x)) correct++
-            else wrong++
-        }
-
-        println("These are the total correct expressions: $correct")
-        println("These are the total wrong expressions: $wrong")
-        //var results = createExpressions(tests);
-        //println("This is the results: ${results}");
-
-    }
-
-    @Test
-    fun expressionFailedTest() {
-        // Variables for tests
-        var oracleResults = mutableListOf<Double>()
-        var calcResults = mutableListOf<Double>()
-
-        // Generate the expressions
-        val tests = 100;
-
-        println("Generating $tests failed expressions...");
-
-        for (x in 1..tests) {
-            // Instantiate the expression state machine builder
-            var expr_builder = ExpressionBuilderStateMachine()
-
-            // Build an expression
             var expression = expr_builder.buildExpression()
-
-            println("This is the expression built: $expression")
-            // Randomize the expression with failed characters
-            expression = expr_builder.randomizeCharacters()
+            println("This is the Original Expression: ${expr_builder.expression}")
+            println("This is the Rhino Expression: $expression")
+            // Determine if valid or bad expression (even are bad)
+            if (x % 2 == 0) expression = expr_builder.randomizeCharacters()
             // Global Oracle test against Rhino Android evaluate
             val resultOracle = expr_builder.evaluate(expression)
             println("This is the result of the Oracle evaluation: $resultOracle")
+            // Handle the Calculator evaluation
             try {
                 // Local evaluation of the expression
                 val pnExp = toPrefix(expr_builder.expression)
-                println("This is the Original Expression: ${expr_builder.expression}")
-                println("This is the PN Expression: $pnExp")
                 val resultCode = evaluatePN(pnExp)
                 println("This is the result of the Program evaluation: $resultCode")
                 // Capture the results
-                oracleResults.add(resultOracle)
-                calcResults.add(resultCode)
+                if (x % 2 == 0) {
+                    oracleBadResults.add(resultOracle)
+                    calcBadResults.add(resultCode)
+                }
+                else {
+                    oracleCorrectResults.add(resultOracle)
+                    calcCorrectResults.add(resultCode)
+                }
+
             } catch (e: Exception) {
                 println("Error with Calc processing: ${e.message}")
             }
-
         }
 
         // Output the results
+        println("Calculating test results...")
+        // Good expression results
         var correct = 0
         var wrong = 0
-        println("Calculating failed test results...")
-        //println("Size of oracle: ${oracleResults.size}")
-        //println("Size of calc: ${calcResults.size}")
-        for (x in 0..< oracleResults.size) {
-            if (oracleResults.get(x) == calcResults.get(x)) correct++
+        println("Results for correct expression testing:")
+        for (x in 0..< oracleCorrectResults.size) {
+            if (oracleCorrectResults.get(x) == calcCorrectResults.get(x)) correct++
             else wrong++
         }
-
+        println("These are the total correct good expressions: $correct")
+        println("These are the total wrong good expressions: $wrong")
+        // Bad expression results
+        correct = 0
+        wrong = 0
+        println("Results for bad expression testing:")
+        for (x in 0..< oracleBadResults.size) {
+            if (oracleBadResults.get(x) == calcBadResults.get(x)) correct++
+            else wrong++
+        }
         println("These are the total failed expressions handled: $correct")
         println("These are the total failed expressions not handled: $wrong")
     }
