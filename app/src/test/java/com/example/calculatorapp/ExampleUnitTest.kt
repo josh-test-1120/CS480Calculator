@@ -629,14 +629,30 @@ class ExampleUnitTest {
         println("These are the total correct good expressions: $correct")
         println("These are the total wrong good expressions: $wrong")
         // Bad expression results
-        correct = 0
-        wrong = 0
+        var handledFailures = 0
+        var unhandledFailures = 0
         println("Results for bad expression testing:")
         for (x in 0..< oracleBadResults.size) {
-            if (oracleBadResults.get(x) == calcBadResults.get(x)) correct++
-            else wrong++
+            if (oracleBadResults.get(x) == calcBadResults.get(x)) handledFailures++
+            else unhandledFailures++
         }
-        println("These are the total failed expressions handled: $correct")
-        println("These are the total failed expressions not handled: $wrong")
+        println("These are the total failed expressions handled: $handledFailures")
+        println("These are the total failed expressions not handled: $unhandledFailures")
+
+        // Total number of tests
+        val totalTests = correct + wrong + handledFailures + unhandledFailures
+
+        // Calculate statistics
+        val accuracy = (correct.toDouble() / totalTests) * 100
+        val errorRate = (wrong.toDouble() / totalTests) * 100
+        val handledFailureRate = (handledFailures.toDouble() / (handledFailures + unhandledFailures)) * 100
+        val unhandledFailureRate = (unhandledFailures.toDouble() / (handledFailures + unhandledFailures)) * 100
+
+        // Display results
+        println("Total tests: $totalTests")
+        println("Accuracy: ${"%.2f".format(accuracy)}%")
+        println("Error Rate: ${"%.2f".format(errorRate)}%")
+        println("Handled Failure Rate: ${"%.2f".format(handledFailureRate)}%")
+        println("Unhandled Failure Rate: ${"%.2f".format(unhandledFailureRate)}%")
     }
 }
