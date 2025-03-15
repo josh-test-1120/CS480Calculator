@@ -54,7 +54,6 @@ import kotlin.math.ln
 import kotlin.math.log10
 import kotlin.math.sqrt
 import kotlin.math.tan
-import kotlin.random.Random
 
 /**
  * This is the main activity class that drives the UI
@@ -923,6 +922,7 @@ fun toPrefix(expression: String,
     val operands = Stack<String>()
     // Empty PN
     val emptyPN = "+'0''0'"
+    var counter = 0
     // Dictionaries of operators
     val precedence = mapOf(
         '+' to 1, '-' to 1,
@@ -987,7 +987,11 @@ fun toPrefix(expression: String,
                 showToast("Bracket operator error")
                 return emptyPN
             }
+            counter = 0
             while (!operators.isEmpty() && operators.peek() != '}') {
+                if (operands.isEmpty()) break
+                counter++
+                if (counter > 1000) println("While loop 1")
                 evalOperator(operators, operands)
             }
             // Handle errors where no matching close bracket
@@ -1008,7 +1012,11 @@ fun toPrefix(expression: String,
                 showToast("Parenthesis operator error")
                 return emptyPN
             }
+            counter = 0
             while (!operators.isEmpty() && operators.peek() != ')') {
+                if (operands.isEmpty()) break
+                counter++
+                if (counter > 1000) println("While loop 2")
                 evalOperator(operators, operands)
             }
             // Handle errors where no matching close bracket
@@ -1030,6 +1038,7 @@ fun toPrefix(expression: String,
             else if (c == '-' && precedence.containsKey(nextc)
                 || (c == '-' && (nextc == '(' || nextc == '{'))) c = 'n'
             // Handle the rest of the operators based on precedence
+            counter = 0
             while (!operators.isEmpty() && precedence.getOrDefault(
                     operators.peek(),
                     0
@@ -1037,6 +1046,8 @@ fun toPrefix(expression: String,
             ) {
                 // Break out if no operands
                 if (operands.isEmpty()) break;
+                counter++
+                if (counter > 1000) println("While loop 3")
                 // Process operators if there are some operands
                 else evalOperator(operators, operands)
             }
@@ -1045,7 +1056,11 @@ fun toPrefix(expression: String,
         }
     }
     // Evaluate the remaining operators
+    counter = 0
     while (!operators.isEmpty()) {
+        if (operands.isEmpty()) break
+        counter++
+        if (counter > 1000) println("While loop 4")
         evalOperator(operators, operands)
     }
     // Return the coded string

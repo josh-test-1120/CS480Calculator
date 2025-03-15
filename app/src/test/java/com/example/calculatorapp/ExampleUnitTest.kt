@@ -1,8 +1,19 @@
 package com.example.calculatorapp
-import org.junit.Assert.assertEquals
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.Test
 import org.mozilla.javascript.Context
-import java.util.Scanner
 import kotlin.math.ceil
 import kotlin.random.Random
 
@@ -74,13 +85,13 @@ class ExpressionBuilderStateMachine {
     private val lowExpOperators = listOf('+', '-', '*')
     private val decimal = '.'
     private val badCharacters = listOf('x', 'c', 'e', '%', '!', '$', '_', '|', '&', '<', '>')
-
+    // Expression settings and variables
     var expression = ""
     var number = ""
     var exponent = ""
     var complexity = 1
     val builderCycles = 100
-
+    // Grouping stacks for parenthesis and brackets
     private var groupingStack = ArrayDeque<Char>()
     private var expGroupingStack = ArrayDeque<Char>()
 
@@ -427,9 +438,7 @@ class ExpressionBuilderStateMachine {
         for (number in 0..length) {
             processExpressionState()
         }
-        println("This is the expression final state: ${currentExpressionState}")
-        println("This is the expression character: ${expression.get(expression.length-1)}")
-        // Check last state and reconcile
+        // Check last state and reconcile closure
         val binaryState = (currentExpressionState == ExpressionState.BinaryOperator) &&
             (!charArrayOf(')','}').contains(expression.get(expression.length-1)))
         val unaryState = (currentExpressionState == ExpressionState.NumberAfterUnary) ||
@@ -440,8 +449,6 @@ class ExpressionBuilderStateMachine {
         val operatorState = binaryOperators.contains(expression.get(expression.length-1))
         val bracketState = charArrayOf('(','{').contains(expression.get(expression.length-1))
 
-        println("Binary state: $binaryState, Grouped State: $groupedState, Unary State: $unaryState, " +
-            "Number State: $numberState")
         // If the next state matches a state that needs to be reconciled, add a number
         if (binaryState || groupedState || unaryState || numberState || operatorState
             || bracketState) {
@@ -554,21 +561,62 @@ class ExpressionBuilderStateMachine {
      * Randomize the characters
      * to generate bad expressions
      */
-    fun randomizeCharacters(): String {
+    fun randomizeCharacters(expression: String): String {
         // Variables
         var badString = expression.toCharArray()
         // Randomize 5% of the characters as bad
-        val randomRatio = .05
+        val randomRatio = .15
         // Change characters according to randomizer rate
-        for (x in 0..builderCycles) {
-            if (x == ceil(builderCycles * randomRatio).toInt())
+        for (x in 0..< expression.length) {
+            if (x % ceil(expression.length / ceil(expression.length * randomRatio)).toInt() == 0)
                 badString[x] = badCharacters[Random.nextInt(badCharacters.size)]
         }
         // Return expression with unknown characters
-        return badString.toString()
+        return badString.joinToString("")
     }
 }
 
+/**
+ * Suspend function to handle endless
+ * timeouts or loops
+ */
+suspend fun endlessFunction(expression: String, index: Int,
+                            resultOracle: Double,
+                            oracleBadResults: MutableList<Double>,
+                            oracleCorrectResults: MutableList<Double>,
+                            calcBadResults: MutableList<Double>,
+                            calcCorrectResults: MutableList<Double>): Double = withContext(Dispatchers.IO) {
+    // Initialize result code
+    var resultCode = 0.0
+    // Handler for Calculator functions
+    try {
+        //ensureActive()
+        withTimeout(25000) {
+            runInterruptible {
+                // Local evaluation of the expression
+                val pnExp = toPrefix(expression)
+                resultCode = evaluatePN(pnExp)
+            }
+        }
+        println("This is the result of the Program evaluation: $resultCode")
+    } catch (e: CancellationException) {
+        println("Calculator timed out and was canceled")
+    } catch (e: Exception) {
+        println("Calculator Exception: ${e.message}")
+    }
+    finally {
+        // Capture the results
+        if (index % 2 == 0) {
+            oracleBadResults.add(resultOracle)
+            calcBadResults.add(resultCode)
+        } else {
+            oracleCorrectResults.add(resultOracle)
+            calcCorrectResults.add(resultCode)
+        }
+    }
+    // Return the resultCode
+    return@withContext resultCode
+}
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -577,19 +625,14 @@ class ExpressionBuilderStateMachine {
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
-class ExampleUnitTest {
-    @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
-    }
-
+class CalculatorUnitTests {
     /**
      * Generate expressions and test them out
      * will generate good and bad expressions
      * and test based on the number of tests defined in the Unit test
      */
     @Test
-    fun expressionTest() {
+    fun expressionTest() = runTest {
         // Variables for tests
         var oracleCorrectResults = mutableListOf<Double>()
         var calcCorrectResults = mutableListOf<Double>()
@@ -597,17 +640,12 @@ class ExampleUnitTest {
         var calcBadResults = mutableListOf<Double>()
 
         // Generate the expressions
-        val tests = 100000;
-
-        // Calculate the midpoint
-        val midpoint = tests / 2
+        val tests = 500000
+        //val tests = 10000
 
         // Expression complexity
         val min = 25
         val max = 100
-
-        // Split the list into two halves
-        val firstHalf = tests - midpoint
 
         println("Generating $tests expressions...");
 
@@ -626,37 +664,47 @@ class ExampleUnitTest {
             }
             // Determine if valid or bad expression (even are bad)
             if (x % 2 == 0) {
-                expression = expr_builder.randomizeCharacters()
                 println("This is a bad expression")
+                println("Expression before randomization: $expression")
+                expr_builder.expression = expr_builder.randomizeCharacters(expr_builder.expression)
+                if (expression.length != expr_builder.expression.length)
+                    expression = expr_builder.randomizeCharacters(expression)
+                else expression = expr_builder.expression
+                //expr_builder.expression = expression
             }
+            else println("This is a good expression")
             println("This is the Original Expression: ${expr_builder.expression}")
             println("This is the Rhino Expression: $expression")
             // Global Oracle test against Rhino Android evaluate
             val resultOracle = expr_builder.evaluate(expression)
+            var resultCode = 0.0
             println("This is the result of the Oracle evaluation: $resultOracle")
+
             // Handle the Calculator evaluation
             try {
-                // Local evaluation of the expression
-                val pnExp = toPrefix(expr_builder.expression)
-                val resultCode = evaluatePN(pnExp)
-                println("This is the result of the Program evaluation: $resultCode")
-                // Capture the results
-                if (x % 2 == 0) {
-                    oracleBadResults.add(resultOracle)
-                    calcBadResults.add(resultCode)
+                val scope = CoroutineScope(Dispatchers.Default)
+                val job = scope.launch {
+                    try {
+                        resultCode = endlessFunction(expr_builder.expression, x, resultOracle,
+                            oracleBadResults, oracleCorrectResults, calcBadResults, calcCorrectResults)
+                    } catch (e: TimeoutCancellationException) {
+                        println("Job evaluation timed out!")
+                    } catch (e: CancellationException) {
+                        println("Job evaluation timed out!")
+                    } catch (e: Exception) {
+                        println("Job Exception: ${e.message}")
+                    }
                 }
-                else {
-                    oracleCorrectResults.add(resultOracle)
-                    calcCorrectResults.add(resultCode)
-                }
-            // Catch Exceptions
+                // Join the job
+                job.join()
+            // Handle scope exceptions
             } catch (e: Exception) {
-                println("Error with Calc processing: ${e.message}")
+                println("Coroutine Exception: $e")
             }
         }
 
         // Output the results
-        println("Calculating test results...")
+        println("Calculating test expression results...")
         // Good expression results
         var correct = 0
         var wrong = 0
@@ -698,6 +746,7 @@ class ExampleUnitTest {
         val accuracy = (totalGoodTests.toDouble() / totalTests) * 100
         val errorRate = (totalBadTests.toDouble() / totalTests) * 100
         val handledFailureRate = (handledFailures.toDouble() / totalFailedTest) * 100
+        if (unhandledFailures == 0) unhandledFailures = totalFailedTest - handledFailures
         val unhandledFailureRate = (unhandledFailures.toDouble() / totalFailedTest) * 100
 
         // Display results
