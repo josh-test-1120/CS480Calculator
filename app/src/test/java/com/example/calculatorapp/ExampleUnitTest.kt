@@ -598,13 +598,14 @@ suspend fun endlessFunction(expression: String, index: Int,
                 resultCode = evaluatePN(pnExp)
             }
         }
-        println("This is the result of the Program evaluation: $resultCode")
+        //println("This is the result of the Program evaluation: $resultCode")
     } catch (e: CancellationException) {
         println("Calculator timed out and was canceled")
     } catch (e: Exception) {
         println("Calculator Exception: ${e.message}")
     }
     finally {
+        println("This is the result of the Program evaluation: $resultCode")
         // Capture the results
         if (index % 2 == 0) {
             oracleBadResults.add(resultOracle)
@@ -733,6 +734,8 @@ class CalculatorUnitTests {
                 (oracleBadResults.get(x) == 0.0 && calcBadResults.get(x).isNaN())) handledFailures++
             else unhandledFailures++
         }
+        // Reconcile unhandled failures
+        if (unhandledFailures == 0) unhandledFailures = (ceil((tests/2).toDouble()) - handledFailures).toInt()
         println("These are the total failed expressions handled: $handledFailures")
         println("These are the total failed expressions not handled: $unhandledFailures")
 
@@ -746,7 +749,6 @@ class CalculatorUnitTests {
         val accuracy = (totalGoodTests.toDouble() / totalTests) * 100
         val errorRate = (totalBadTests.toDouble() / totalTests) * 100
         val handledFailureRate = (handledFailures.toDouble() / totalFailedTest) * 100
-        if (unhandledFailures == 0) unhandledFailures = totalFailedTest - handledFailures
         val unhandledFailureRate = (unhandledFailures.toDouble() / totalFailedTest) * 100
 
         // Display results
