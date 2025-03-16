@@ -3,14 +3,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.Test
 import org.mozilla.javascript.Context
@@ -604,7 +599,8 @@ suspend fun endlessFunction(expression: String, index: Int,
                             oracleCorrectResults: MutableList<Double>,
                             calcBadResults: MutableList<Double>,
                             calcCorrectResults: MutableList<Double>,
-                            verbose: Boolean): Double = withContext(Dispatchers.IO) {
+//                            verbose: Boolean): Double = withContext(Dispatchers.IO) {
+                            verbose: Boolean) {
     // Initialize result code
     var resultCode = 0.0
     // Handler for Calculator functions
@@ -635,7 +631,7 @@ suspend fun endlessFunction(expression: String, index: Int,
         }
     }
     // Return the resultCode
-    return@withContext resultCode
+    //return@withContext resultCode
 }
 
 /**
@@ -741,12 +737,9 @@ class CalculatorUnitTests {
         var calcCorrectResults = mutableListOf<Double>()
         var oracleBadResults = mutableListOf<Double>()
         var calcBadResults = mutableListOf<Double>()
-
         // Generate the expressions
         val tests = 500000
         val verbose = false
-        //val tests = 10000
-
         // Expression complexity
         val min = 25
         val max = 100
@@ -778,7 +771,6 @@ class CalculatorUnitTests {
                 if (expression.length != expr_builder.expression.length)
                     expression = expr_builder.randomizeCharacters(expression)
                 else expression = expr_builder.expression
-                //expr_builder.expression = expression
             }
             else if (verbose) println("This is a good expression")
             if (verbose) {
@@ -787,7 +779,7 @@ class CalculatorUnitTests {
             }
             // Global Oracle test against Rhino Android evaluate
             val resultOracle = expr_builder.evaluate(expression, verbose)
-            var resultCode = 0.0
+            //var resultCode = 0.0
             if (verbose) println("This is the result of the Oracle evaluation: $resultOracle")
 
             // Handle the Calculator evaluation
@@ -796,7 +788,7 @@ class CalculatorUnitTests {
                 val scope = CoroutineScope(Dispatchers.Default)
                 val job = scope.launch {
                     try {
-                        resultCode = endlessFunction(expr_builder.expression, x, resultOracle,
+                        endlessFunction(expr_builder.expression, x, resultOracle,
                             oracleBadResults, oracleCorrectResults, calcBadResults,
                             calcCorrectResults, verbose)
                     } catch (e: TimeoutCancellationException) {
