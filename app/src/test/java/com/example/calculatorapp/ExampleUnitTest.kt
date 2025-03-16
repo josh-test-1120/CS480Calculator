@@ -390,6 +390,8 @@ class ExpressionBuilderStateMachine {
     /**
      * This will create nested pow functions
      * to ensure compatibility with Oracle
+     * @param expression String of the exponent expression
+     * @return String in exponent format. example: pow(x,y)
      */
     private fun exponentFormat(expression: String): String {
         // Find the index of the rightmost '^' operator
@@ -427,7 +429,8 @@ class ExpressionBuilderStateMachine {
      * This will build an Expression
      * from the expression state machine
      * @param length This is the length of the expression
-     * @param complexity This is the complexity of the expression
+     * @param comp This is the complexity of the expression
+     * @return String of the expression that was generated
      */
     fun buildExpression(length: Int, comp: Int): String {
         // Variables
@@ -438,7 +441,7 @@ class ExpressionBuilderStateMachine {
         for (number in 0..length) {
             processExpressionState()
         }
-        // Check last state and reconcile closure
+        // Check last state and reconcile closure (complex state decision)
         val binaryState = (currentExpressionState == ExpressionState.BinaryOperator) &&
             (!charArrayOf(')','}').contains(expression.get(expression.length-1)))
         val unaryState = (currentExpressionState == ExpressionState.NumberAfterUnary) ||
@@ -469,6 +472,7 @@ class ExpressionBuilderStateMachine {
      * This will transform the expression
      * to ensure compatibility with Oracle library
      * Changes exponent and removed brackets
+     * @return String of the expression transformed for Oracle
      */
     private fun transformOracle(): String {
         // Variable
@@ -485,6 +489,7 @@ class ExpressionBuilderStateMachine {
     /**
      * This will build a Number
      * from the number state machine
+     * @return String of the number generated
      */
     private fun buildNumber(): String {
         currentNumberState = NumberState.Start
@@ -499,6 +504,7 @@ class ExpressionBuilderStateMachine {
     /**
      * This will build an Exponent
      * from the exponent state machine
+     * @return String of the exponent expression generated
      */
     private fun buildExponent(): String {
         expGroupingStack = ArrayDeque<Char>()
@@ -515,8 +521,10 @@ class ExpressionBuilderStateMachine {
     /**
      * This will evaluate the expression
      * with the Rhino library as an Oracle
+     * @param expression This is the expression as a String
+     * @return Double of the evaluated result from Oracle
      */
-    fun evaluate(expression: String): Double {
+    fun evaluate(expression: String, verbose: Boolean): Double {
         // Variables
         var result = 0.0
         // Handler for evaluation for Rhino
@@ -550,7 +558,7 @@ class ExpressionBuilderStateMachine {
         }
         // Handle exceptions and log errors
         catch (e: Exception) {
-            println("Error: $e");
+            if (verbose) println("Error: $e");
             result = 0.0;
         }
         // Return the evaluated result
@@ -560,6 +568,8 @@ class ExpressionBuilderStateMachine {
     /**
      * Randomize the characters
      * to generate bad expressions
+     * @param expression This is the expression as a String
+     * @return String of the bad expression with random characters
      */
     fun randomizeCharacters(expression: String): String {
         // Variables
@@ -578,14 +588,23 @@ class ExpressionBuilderStateMachine {
 
 /**
  * Suspend function to handle endless
- * timeouts or loops
+ * timeouts or loops in the Calculator code
+ * @param expression This is the string of the expression to process
+ * @param resultOracle This is the result that Oracle had as a Double
+ * @param oracleBadResults MutableList of bad expression results from oracle
+ * @param oracleCorrectResults MutableList of good expression results from oracle
+ * @param calcBadResults MutableList of bad expression results from calculator
+ * @param calcCorrectResults MutableList of good expression results from calculator
+ * @param verbose Boolean that defines the output verbosity
+ * @return Double of Calculator expression evaluation
  */
 suspend fun endlessFunction(expression: String, index: Int,
                             resultOracle: Double,
                             oracleBadResults: MutableList<Double>,
                             oracleCorrectResults: MutableList<Double>,
                             calcBadResults: MutableList<Double>,
-                            calcCorrectResults: MutableList<Double>): Double = withContext(Dispatchers.IO) {
+                            calcCorrectResults: MutableList<Double>,
+                            verbose: Boolean): Double = withContext(Dispatchers.IO) {
     // Initialize result code
     var resultCode = 0.0
     // Handler for Calculator functions
@@ -600,12 +619,12 @@ suspend fun endlessFunction(expression: String, index: Int,
         }
         //println("This is the result of the Program evaluation: $resultCode")
     } catch (e: CancellationException) {
-        println("Calculator timed out and was canceled")
+        if (verbose) println("Calculator timed out and was canceled")
     } catch (e: Exception) {
-        println("Calculator Exception: ${e.message}")
+        if (verbose) println("Calculator Exception: ${e.message}")
     }
     finally {
-        println("This is the result of the Program evaluation: $resultCode")
+        if (verbose) println("This is the result of the Program evaluation: $resultCode")
         // Capture the results
         if (index % 2 == 0) {
             oracleBadResults.add(resultOracle)
@@ -617,6 +636,89 @@ suspend fun endlessFunction(expression: String, index: Int,
     }
     // Return the resultCode
     return@withContext resultCode
+}
+
+/**
+ * This will calculate and output the results of the
+ * expression testing based on the number of tests
+ * defined and the oracle that was used
+ * @param oracleCorrectResults List of good expression results from oracle
+ * @param oracleBadResults List of bad expression results from oracle
+ * @param calcCorrectResults List of good expression results from calculator
+ * @param calcBadResults List of bad expression results from calculator
+ * @param tests Number of tests done
+ * @param verbose Boolean that defines verbosity of output
+ */
+fun expressionTestAnalysis(oracleCorrectResults: MutableList<Double>,
+                           oracleBadResults: MutableList<Double>,
+                           calcCorrectResults: MutableList<Double>,
+                           calcBadResults: MutableList<Double>,
+                           tests: Int, verbose: Boolean) {
+    // Output the results
+    if (verbose) {
+        println("Calculating test expression results...")
+        println("Results for correct expression testing:")
+    }
+    // Good expression results
+    var correct = 0
+    var wrong = 0
+    // Determine oracle count
+    var oracleCount = if (oracleCorrectResults.size > calcCorrectResults.size) calcCorrectResults.size
+        else oracleCorrectResults.size
+    // Count correct results
+    for (x in 0..< oracleCount) {
+        if (oracleCorrectResults.get(x) == calcCorrectResults.get(x) ||
+            (oracleCorrectResults.get(x) == 0.0 && oracleCorrectResults.get(x) != 0.0) ||
+            (oracleCorrectResults.get(x).isInfinite() && oracleCorrectResults.get(x) == 0.0) ||
+            (oracleCorrectResults.get(x) == 0.0 && oracleCorrectResults.get(x).isNaN())) correct++
+        else wrong++
+    }
+    if (verbose) {
+        println("These are the total correct good expressions: $correct")
+        println("These are the total wrong good expressions: $wrong")
+    }
+
+    // Bad expression results
+    var handledFailures = 0
+    var unhandledFailures = 0
+    if (verbose) println("Results for bad expression testing:")
+    oracleCount = if (oracleBadResults.size > calcBadResults.size) calcBadResults.size
+    else oracleBadResults.size
+    // Count the bad results
+    for (x in 0..< oracleCount) {
+        if (oracleBadResults.get(x) == calcBadResults.get(x) ||
+            (oracleBadResults.get(x) == 0.0 && calcBadResults.get(x) != 0.0) ||
+            (oracleBadResults.get(x).isInfinite() && calcBadResults.get(x) == 0.0) ||
+            (oracleBadResults.get(x) == 0.0 && calcBadResults.get(x).isNaN()))
+            handledFailures++
+        else unhandledFailures++
+    }
+    // Reconcile unhandled failures
+    if (unhandledFailures == 0) unhandledFailures = (ceil((tests/2).toDouble()) - handledFailures).toInt()
+    if (correct + wrong < (tests/2)) unhandledFailures += (tests/2) - (correct + wrong)
+    if (verbose) {
+        println("These are the total bad expressions handled: $handledFailures")
+        println("These are the total bad expressions not handled: $unhandledFailures")
+    }
+
+    // Total number of tests
+    val totalGoodTests = correct + handledFailures
+    val totalBadTests = wrong + unhandledFailures
+    val totalFailedTest = handledFailures + unhandledFailures
+    val totalTests = totalGoodTests + totalBadTests
+
+    // Calculate statistics
+    val accuracy = (totalGoodTests.toDouble() / totalTests) * 100
+    val errorRate = (totalBadTests.toDouble() / totalTests) * 100
+    val handledFailureRate = (handledFailures.toDouble() / totalFailedTest) * 100
+    val unhandledFailureRate = (unhandledFailures.toDouble() / totalFailedTest) * 100
+
+    // Display final analysis results
+    println("Total tests: $totalTests")
+    println("Accuracy: ${"%.2f".format(accuracy)}%")
+    println("Error Rate: ${"%.2f".format(errorRate)}%")
+    println("Handled Bad Expression Rate: ${"%.2f".format(handledFailureRate)}%")
+    println("Unhandled Bad Expression Rate: ${"%.2f".format(unhandledFailureRate)}%")
 }
 
 /**
@@ -642,6 +744,7 @@ class CalculatorUnitTests {
 
         // Generate the expressions
         val tests = 500000
+        val verbose = false
         //val tests = 10000
 
         // Expression complexity
@@ -658,104 +761,61 @@ class CalculatorUnitTests {
             val expressionComplexity = Random.nextInt(2)
             // Build an expression
             var expression = expr_builder.buildExpression(expressionLength, expressionComplexity)
-            println("Expression Length (in state changes): $expressionLength")
-            when (expressionComplexity) {
-                0 -> println("Expression has Low Complexity (in operators)")
-                1 -> println("Expression has High Complexity (in operators)")
+            if (verbose) {
+                println("Expression Length (in state changes): $expressionLength")
+                when (expressionComplexity) {
+                    0 -> println("Expression has Low Complexity (in operators)")
+                    1 -> println("Expression has High Complexity (in operators)")
+                }
             }
             // Determine if valid or bad expression (even are bad)
             if (x % 2 == 0) {
-                println("This is a bad expression")
-                println("Expression before randomization: $expression")
+                if (verbose) {
+                    println("This is a bad expression")
+                    println("Expression before randomization: $expression")
+                }
                 expr_builder.expression = expr_builder.randomizeCharacters(expr_builder.expression)
                 if (expression.length != expr_builder.expression.length)
                     expression = expr_builder.randomizeCharacters(expression)
                 else expression = expr_builder.expression
                 //expr_builder.expression = expression
             }
-            else println("This is a good expression")
-            println("This is the Original Expression: ${expr_builder.expression}")
-            println("This is the Rhino Expression: $expression")
+            else if (verbose) println("This is a good expression")
+            if (verbose) {
+                println("This is the Original Expression: ${expr_builder.expression}")
+                println("This is the Rhino Expression: $expression")
+            }
             // Global Oracle test against Rhino Android evaluate
-            val resultOracle = expr_builder.evaluate(expression)
+            val resultOracle = expr_builder.evaluate(expression, verbose)
             var resultCode = 0.0
-            println("This is the result of the Oracle evaluation: $resultOracle")
+            if (verbose) println("This is the result of the Oracle evaluation: $resultOracle")
 
             // Handle the Calculator evaluation
+            // Coroutine implementation for handle stuck evaluations
             try {
                 val scope = CoroutineScope(Dispatchers.Default)
                 val job = scope.launch {
                     try {
                         resultCode = endlessFunction(expr_builder.expression, x, resultOracle,
-                            oracleBadResults, oracleCorrectResults, calcBadResults, calcCorrectResults)
+                            oracleBadResults, oracleCorrectResults, calcBadResults,
+                            calcCorrectResults, verbose)
                     } catch (e: TimeoutCancellationException) {
-                        println("Job evaluation timed out!")
+                        if (verbose) println("Job evaluation timed out!")
                     } catch (e: CancellationException) {
-                        println("Job evaluation timed out!")
+                        if (verbose) println("Job evaluation timed out!")
                     } catch (e: Exception) {
-                        println("Job Exception: ${e.message}")
+                        if (verbose) println("Job Exception: ${e.message}")
                     }
                 }
                 // Join the job
                 job.join()
-            // Handle scope exceptions
-            } catch (e: Exception) {
-                println("Coroutine Exception: $e")
-            }
+            // Handle scope exceptions (do nothing)
+            } catch (_: Exception) {}
         }
 
-        // Output the results
-        println("Calculating test expression results...")
-        // Good expression results
-        var correct = 0
-        var wrong = 0
-        println("Results for correct expression testing:")
-        var oracleCount = if (oracleCorrectResults.size > calcCorrectResults.size) calcCorrectResults.size
-            else oracleCorrectResults.size
-        for (x in 0..< oracleCount) {
-            if (oracleCorrectResults.get(x) == calcCorrectResults.get(x) ||
-                (oracleCorrectResults.get(x) == 0.0 && oracleCorrectResults.get(x) != 0.0) ||
-                (oracleCorrectResults.get(x).isInfinite() && oracleCorrectResults.get(x) == 0.0) ||
-                (oracleCorrectResults.get(x) == 0.0 && oracleCorrectResults.get(x).isNaN())) correct++
-            else wrong++
-        }
-        println("These are the total correct good expressions: $correct")
-        println("These are the total wrong good expressions: $wrong")
-        // Bad expression results
-        var handledFailures = 0
-        var unhandledFailures = 0
-        println("Results for bad expression testing:")
-        oracleCount = if (oracleBadResults.size > calcBadResults.size) calcBadResults.size
-            else oracleBadResults.size
-        for (x in 0..< oracleCount) {
-            if (oracleBadResults.get(x) == calcBadResults.get(x) ||
-                (oracleBadResults.get(x) == 0.0 && calcBadResults.get(x) != 0.0) ||
-                (oracleBadResults.get(x).isInfinite() && calcBadResults.get(x) == 0.0) ||
-                (oracleBadResults.get(x) == 0.0 && calcBadResults.get(x).isNaN())) handledFailures++
-            else unhandledFailures++
-        }
-        // Reconcile unhandled failures
-        if (unhandledFailures == 0) unhandledFailures = (ceil((tests/2).toDouble()) - handledFailures).toInt()
-        println("These are the total failed expressions handled: $handledFailures")
-        println("These are the total failed expressions not handled: $unhandledFailures")
+        // Output the Test Analysis
+        expressionTestAnalysis(oracleCorrectResults, oracleBadResults, calcCorrectResults,
+            calcBadResults, tests, verbose)
 
-        // Total number of tests
-        val totalGoodTests = correct + handledFailures
-        val totalBadTests = wrong + unhandledFailures
-        val totalFailedTest = handledFailures + unhandledFailures
-        val totalTests = totalGoodTests + totalBadTests
-
-        // Calculate statistics
-        val accuracy = (totalGoodTests.toDouble() / totalTests) * 100
-        val errorRate = (totalBadTests.toDouble() / totalTests) * 100
-        val handledFailureRate = (handledFailures.toDouble() / totalFailedTest) * 100
-        val unhandledFailureRate = (unhandledFailures.toDouble() / totalFailedTest) * 100
-
-        // Display results
-        println("Total tests: $totalTests")
-        println("Accuracy: ${"%.2f".format(accuracy)}%")
-        println("Error Rate: ${"%.2f".format(errorRate)}%")
-        println("Handled Failure Rate: ${"%.2f".format(handledFailureRate)}%")
-        println("Unhandled Failure Rate: ${"%.2f".format(unhandledFailureRate)}%")
     }
 }

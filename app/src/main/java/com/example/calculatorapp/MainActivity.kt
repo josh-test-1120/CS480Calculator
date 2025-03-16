@@ -987,11 +987,8 @@ fun toPrefix(expression: String,
                 showToast("Bracket operator error")
                 return emptyPN
             }
-            counter = 0
             while (!operators.isEmpty() && operators.peek() != '}') {
                 if (operands.isEmpty()) break
-                counter++
-                if (counter > 1000) println("While loop 1")
                 evalOperator(operators, operands)
             }
             // Handle errors where no matching close bracket
@@ -1012,11 +1009,8 @@ fun toPrefix(expression: String,
                 showToast("Parenthesis operator error")
                 return emptyPN
             }
-            counter = 0
             while (!operators.isEmpty() && operators.peek() != ')') {
                 if (operands.isEmpty()) break
-                counter++
-                if (counter > 1000) println("While loop 2")
                 evalOperator(operators, operands)
             }
             // Handle errors where no matching close bracket
@@ -1038,7 +1032,6 @@ fun toPrefix(expression: String,
             else if (c == '-' && precedence.containsKey(nextc)
                 || (c == '-' && (nextc == '(' || nextc == '{'))) c = 'n'
             // Handle the rest of the operators based on precedence
-            counter = 0
             while (!operators.isEmpty() && precedence.getOrDefault(
                     operators.peek(),
                     0
@@ -1046,8 +1039,6 @@ fun toPrefix(expression: String,
             ) {
                 // Break out if no operands
                 if (operands.isEmpty()) break;
-                counter++
-                if (counter > 1000) println("While loop 3")
                 // Process operators if there are some operands
                 else evalOperator(operators, operands)
             }
@@ -1056,11 +1047,8 @@ fun toPrefix(expression: String,
         }
     }
     // Evaluate the remaining operators
-    counter = 0
     while (!operators.isEmpty()) {
         if (operands.isEmpty()) break
-        counter++
-        if (counter > 1000) println("While loop 4")
         evalOperator(operators, operands)
     }
     // Return the coded string
@@ -1215,7 +1203,7 @@ fun evaluatePN(prefix: String,
             // Handle exceptions
             } catch (e: Exception) {
                 showToast("There is an invalid operation specified")
-                println("This is the invalid operation exception: ${e.toString()}")
+                //println("This is the invalid operation exception: ${e.toString()}")
                 throw java.lang.Exception("There is an invalid operation specified")
             }
         }
@@ -1234,7 +1222,7 @@ fun evaluatePN(prefix: String,
             // Handle exceptions
             } catch (e: Exception) {
                 showToast("There is an invalid operation specified")
-                println("This is the invalid operation exception: ${e.toString()}")
+                //println("This is the invalid operation exception: ${e.toString()}")
                 throw java.lang.Exception("There is an invalid operation specified")
             }
         }
