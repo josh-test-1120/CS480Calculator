@@ -590,7 +590,6 @@ suspend fun endlessFunction(expression: String, index: Int,
                             oracleCorrectResults: MutableList<Double>,
                             calcBadResults: MutableList<Double>,
                             calcCorrectResults: MutableList<Double>,
-//                            verbose: Boolean): Double = withContext(Dispatchers.IO) {
                             verbose: Boolean) {
     // Initialize result code
     var resultCode = 0.0
@@ -619,8 +618,6 @@ suspend fun endlessFunction(expression: String, index: Int,
             calcCorrectResults.add(resultCode)
         }
     }
-    // Return the resultCode
-    //return@withContext resultCode
 }
 
 /**
