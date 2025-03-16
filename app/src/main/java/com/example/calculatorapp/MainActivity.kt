@@ -932,6 +932,9 @@ fun toPrefix(expression: String,
         'l' to 5, 'g' to 5, 'q' to 5,
         'n' to 6,
     )
+    // Valid characters
+    val validChars = listOf('c', 'o', 's', 'i', 'n', 't', 'a', 'g', 'l', 'q', 'r', 't')
+
     // Initial words and number character arrays
     var word = emptyArray<Char>()
     var number = emptyArray<Char>()
@@ -946,7 +949,7 @@ fun toPrefix(expression: String,
         if (i + 1 <= expression.length - 1) prevc = expression[i + 1]
 
         // Handle special string functions
-        if (Character.isLetter(c)) {
+        if (Character.isLetter(c) && validChars.contains(c)) {
             // Add the character to the word
             word += c
             // If there are more letters, go to next iteration
@@ -1038,7 +1041,7 @@ fun toPrefix(expression: String,
                 ) > precedence[c]!!
             ) {
                 // Break out if no operands
-                if (operands.isEmpty()) break;
+                if (operands.isEmpty()) break
                 // Process operators if there are some operands
                 else evalOperator(operators, operands)
             }
@@ -1229,37 +1232,6 @@ fun evaluatePN(prefix: String,
     }
     return stack.pop()
 }
-
-/**
- * This is the to decode and evaluate polish notation expression
- * This is needed to ensure the expression can be decoded and evaluated
- * @param prefix This is string to decode and evaluate
- * @param showToast This is the showToast callback
- * @return evaluated value for decoded expression
- */
-fun createExpressions(tests: Int): Double {
-    // Dictionaries of operators
-    val precedence = mapOf(
-        '+' to 1, '-' to 1,
-        '*' to 2, '/' to 2,
-        '^' to 3,
-        's' to 4, 'c' to 4, 't' to 4, 'o' to 4,
-        'l' to 5, 'g' to 5, 'q' to 5,
-        'n' to 6,
-    )
-
-    val specialOperators = mapOf(
-        's' to "sin", 'c' to "cos",
-        't' to "tan", 'o' to "cot",
-        'l' to "ln", 'g' to "log",
-        'q' to "sqrt",
-    )
-
-    // State Machines for expression generation
-
-    return 0.0;
-               }
-
 
 /**
  * This is the Main preview function composable

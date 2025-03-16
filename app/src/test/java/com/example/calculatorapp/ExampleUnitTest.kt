@@ -17,11 +17,11 @@ import kotlin.random.Random
  * controls the states of number building
  */
 sealed class NumberState {
-    object Start : NumberState()
-    object Number : NumberState()
-    object Decimal : NumberState()
-    object NumberAfterDecimal : NumberState()
-    object End : NumberState()
+    data object Start : NumberState()
+    data object Number : NumberState()
+    data object Decimal : NumberState()
+    data object NumberAfterDecimal : NumberState()
+    data object End : NumberState()
 }
 
 /**
@@ -29,17 +29,17 @@ sealed class NumberState {
  * controls the states of exponent building
  */
 sealed class ExponentState {
-    object Start : ExponentState()
-    object Number : ExponentState()
-    object NumberAfterUnary : ExponentState()
-    object BinaryOperator : ExponentState()
-    object UnaryOperator : ExponentState()
-    object OpenParenthesis : ExponentState()
-    object CloseParenthesis : ExponentState()
-    object OpenBracket : ExponentState()
-    object CloseBracket : ExponentState()
-    object Cleanup : ExponentState()
-    object End : ExponentState()
+    data object Start : ExponentState()
+    data object Number : ExponentState()
+    data object NumberAfterUnary : ExponentState()
+    data object BinaryOperator : ExponentState()
+    data object UnaryOperator : ExponentState()
+    data object OpenParenthesis : ExponentState()
+    data object CloseParenthesis : ExponentState()
+    data object OpenBracket : ExponentState()
+    data object CloseBracket : ExponentState()
+    data object Cleanup : ExponentState()
+    data object End : ExponentState()
 }
 
 /**
@@ -47,18 +47,18 @@ sealed class ExponentState {
  * controls the states of expression building
  */
 sealed class ExpressionState {
-    object Start : ExpressionState()
-    object Number : ExpressionState()
-    object NumberAfterUnary : ExpressionState()
-    object BinaryOperator : ExpressionState()
-    object UnaryOperator : ExpressionState()
-    object ExponentOperator : ExpressionState()
-    object OpenParenthesis : ExpressionState()
-    object CloseParenthesis : ExpressionState()
-    object OpenBracket : ExpressionState()
-    object CloseBracket : ExpressionState()
-    object Cleanup : ExpressionState()
-    object End : ExpressionState()
+    data object Start : ExpressionState()
+    data object Number : ExpressionState()
+    data object NumberAfterUnary : ExpressionState()
+    data object BinaryOperator : ExpressionState()
+    data object UnaryOperator : ExpressionState()
+    data object ExponentOperator : ExpressionState()
+    data object OpenParenthesis : ExpressionState()
+    data object CloseParenthesis : ExpressionState()
+    data object OpenBracket : ExpressionState()
+    data object CloseBracket : ExpressionState()
+    data object Cleanup : ExpressionState()
+    data object End : ExpressionState()
 }
 /**
  * Expression Builder State Machines
@@ -150,51 +150,42 @@ class ExpressionBuilderStateMachine {
      * This will set the Expression state machine
      * to cleanup
      */
-    fun setCurrentExpressionCleanup() {
+    private fun setCurrentExpressionCleanup() {
          currentExpressionState = ExpressionState.Cleanup
     }
 
     /**
      * This will transition the Number state machine
      */
-    fun transitionNumberState() {
+    private fun transitionNumberState() {
         val possibleNextNumberStates = numberTransitions[currentNumberState] ?: throw IllegalStateException("Invalid state: $currentNumberState")
-        if (possibleNextNumberStates.isEmpty()) {
-            currentNumberState = NumberState.End
-        } else {
-            currentNumberState = possibleNextNumberStates[Random.nextInt(possibleNextNumberStates.size)]
-        }
+        currentNumberState = if (possibleNextNumberStates.isEmpty()) NumberState.End
+            else possibleNextNumberStates[Random.nextInt(possibleNextNumberStates.size)]
     }
 
     /**
      * This will transition the Expression state machine
      */
-    fun transitionExpressionState() {
+    private fun transitionExpressionState() {
         val possibleNextExpressionStates = expressionTransitions[currentExpressionState] ?: throw IllegalStateException("Invalid state: $currentExpressionState")
-        if (possibleNextExpressionStates.isEmpty()) {
-            currentExpressionState = ExpressionState.End
-        } else {
-            currentExpressionState = possibleNextExpressionStates[Random.nextInt(possibleNextExpressionStates.size)]
-        }
+        currentExpressionState = if (possibleNextExpressionStates.isEmpty()) ExpressionState.End
+            else possibleNextExpressionStates[Random.nextInt(possibleNextExpressionStates.size)]
     }
 
     /**
      * This will transition the Exponent state machine
      */
-    fun transitionExponentState() {
+    private fun transitionExponentState() {
         val possibleNextExponentStates = exponentTransitions[currentExponentState] ?: throw IllegalStateException("Invalid state: $currentExponentState")
-        if (possibleNextExponentStates.isEmpty()) {
-            currentExponentState = ExponentState.End
-        } else {
-            currentExponentState = possibleNextExponentStates[Random.nextInt(possibleNextExponentStates.size)]
-        }
+        currentExponentState = if (possibleNextExponentStates.isEmpty()) ExponentState.End
+            else possibleNextExponentStates[Random.nextInt(possibleNextExponentStates.size)]
     }
 
     /**
      * This will process the Number state
      * from the Number state machine
      */
-    fun processNumberState() {
+    private fun processNumberState() {
         // Cases for states
         when (currentNumberState) {
             // Number start state
@@ -230,7 +221,7 @@ class ExpressionBuilderStateMachine {
      * This will process the Expression state
      * from the Expression state machine
      */
-    fun processExpressionState() {
+    private fun processExpressionState() {
         // Cases for states
         when (currentExpressionState) {
             // Expression start state
@@ -250,7 +241,7 @@ class ExpressionBuilderStateMachine {
             // Generate a binary operator
             ExpressionState.BinaryOperator -> {
                 val operator = if (complexity == 1) binaryOperators[Random.nextInt(binaryOperators.size)]
-                else lowBinaryOperators[Random.nextInt(lowBinaryOperators.size)]
+                    else lowBinaryOperators[Random.nextInt(lowBinaryOperators.size)]
                 // Set the operator
                 expression += operator
                 if (operator == '^') {
@@ -264,7 +255,7 @@ class ExpressionBuilderStateMachine {
             // Generate a unary operator
             ExpressionState.UnaryOperator -> {
                 expression += if (complexity == 1) unaryOperators[Random.nextInt(unaryOperators.size)]
-                else lowUnaryOperators[Random.nextInt(lowUnaryOperators.size)]
+                    else lowUnaryOperators[Random.nextInt(lowUnaryOperators.size)]
                 expression += "("
                 groupingStack.addLast(')')
                 transitionExpressionState()
@@ -313,7 +304,7 @@ class ExpressionBuilderStateMachine {
      * This handles the processing for Exponent states
      * used in the Exponent state machines
      */
-    fun processExponentState() {
+    private fun processExponentState() {
         // Cases for states
         when (currentExponentState) {
             // Exponent start state
@@ -408,7 +399,7 @@ class ExpressionBuilderStateMachine {
      * This will close an Expression
      * from the expression state machine
      */
-    fun closeGrouping() {
+    private fun closeGrouping() {
         if (!groupingStack.isEmpty()) expression += groupingStack.removeLast()
     }
 
@@ -416,7 +407,7 @@ class ExpressionBuilderStateMachine {
      * This will close an Exponent
      * from the exponent state machine
      */
-    fun closeExpGrouping() {
+    private fun closeExpGrouping() {
         if (!expGroupingStack.isEmpty()) exponent += expGroupingStack.removeLast()
     }
 
@@ -525,9 +516,9 @@ class ExpressionBuilderStateMachine {
         // Handler for evaluation for Rhino
         try {
             // Setup the context for the evaluation
-            var context = Context.enter()
+            val context = Context.enter()
             context.optimizationLevel = -1
-            var scriptable = context.initStandardObjects()
+            val scriptable = context.initStandardObjects()
             // Add Math functions to the scope
             val mathCos = "var cos = function(x) { return java.lang.Math.cos(x); };"           // Cosine function
             val mathSin = "var sin =  function(x) { return java.lang.Math.sin(x); };"          // Sine function
@@ -547,7 +538,7 @@ class ExpressionBuilderStateMachine {
             context.evaluateString(scriptable, mathExp, "MathJS", 7, null)
             context.evaluateString(scriptable, mathSqrt, "MathJS", 8, null)
             // Handle the oracle evaluation with Rhino
-            var resultString = context.evaluateString(scriptable,expression,"Javascript",
+            val resultString = context.evaluateString(scriptable,expression,"Javascript",
                 1,null).toString();
             result = resultString.toDouble()
         }
@@ -568,11 +559,11 @@ class ExpressionBuilderStateMachine {
      */
     fun randomizeCharacters(expression: String): String {
         // Variables
-        var badString = expression.toCharArray()
+        val badString = expression.toCharArray()
         // Randomize 5% of the characters as bad
         val randomRatio = .15
         // Change characters according to randomizer rate
-        for (x in 0..< expression.length) {
+        for (x in expression.indices) {
             if (x % ceil(expression.length / ceil(expression.length * randomRatio)).toInt() == 0)
                 badString[x] = badCharacters[Random.nextInt(badCharacters.size)]
         }
@@ -605,7 +596,6 @@ suspend fun endlessFunction(expression: String, index: Int,
     var resultCode = 0.0
     // Handler for Calculator functions
     try {
-        //ensureActive()
         withTimeout(25000) {
             runInterruptible {
                 // Local evaluation of the expression
@@ -613,7 +603,6 @@ suspend fun endlessFunction(expression: String, index: Int,
                 resultCode = evaluatePN(pnExp)
             }
         }
-        //println("This is the result of the Program evaluation: $resultCode")
     } catch (e: CancellationException) {
         if (verbose) println("Calculator timed out and was canceled")
     } catch (e: Exception) {
@@ -649,12 +638,10 @@ fun expressionTestAnalysis(oracleCorrectResults: MutableList<Double>,
                            oracleBadResults: MutableList<Double>,
                            calcCorrectResults: MutableList<Double>,
                            calcBadResults: MutableList<Double>,
-                           tests: Int, verbose: Boolean) {
+                           tests: Int) {
     // Output the results
-    if (verbose) {
-        println("Calculating test expression results...")
-        println("Results for correct expression testing:")
-    }
+    println()
+    println("Calculating test expression results...")
     // Good expression results
     var correct = 0
     var wrong = 0
@@ -669,15 +656,13 @@ fun expressionTestAnalysis(oracleCorrectResults: MutableList<Double>,
             (oracleCorrectResults.get(x) == 0.0 && oracleCorrectResults.get(x).isNaN())) correct++
         else wrong++
     }
-    if (verbose) {
-        println("These are the total correct good expressions: $correct")
-        println("These are the total wrong good expressions: $wrong")
-    }
+    println("These are the total correct good expressions: $correct")
+    println("These are the total wrong good expressions: $wrong")
 
     // Bad expression results
     var handledFailures = 0
     var unhandledFailures = 0
-    if (verbose) println("Results for bad expression testing:")
+
     oracleCount = if (oracleBadResults.size > calcBadResults.size) calcBadResults.size
     else oracleBadResults.size
     // Count the bad results
@@ -692,10 +677,8 @@ fun expressionTestAnalysis(oracleCorrectResults: MutableList<Double>,
     // Reconcile unhandled failures
     if (unhandledFailures == 0) unhandledFailures = (ceil((tests/2).toDouble()) - handledFailures).toInt()
     if (correct + wrong < (tests/2)) unhandledFailures += (tests/2) - (correct + wrong)
-    if (verbose) {
-        println("These are the total bad expressions handled: $handledFailures")
-        println("These are the total bad expressions not handled: $unhandledFailures")
-    }
+    println("These are the total bad expressions handled: $handledFailures")
+    println("These are the total bad expressions not handled: $unhandledFailures")
 
     // Total number of tests
     val totalGoodTests = correct + handledFailures
@@ -710,6 +693,7 @@ fun expressionTestAnalysis(oracleCorrectResults: MutableList<Double>,
     val unhandledFailureRate = (unhandledFailures.toDouble() / totalFailedTest) * 100
 
     // Display final analysis results
+    println()
     println("Total tests: $totalTests")
     println("Accuracy: ${"%.2f".format(accuracy)}%")
     println("Error Rate: ${"%.2f".format(errorRate)}%")
@@ -733,12 +717,13 @@ class CalculatorUnitTests {
     @Test
     fun expressionTest() = runTest {
         // Variables for tests
-        var oracleCorrectResults = mutableListOf<Double>()
-        var calcCorrectResults = mutableListOf<Double>()
-        var oracleBadResults = mutableListOf<Double>()
-        var calcBadResults = mutableListOf<Double>()
+        val oracleCorrectResults = mutableListOf<Double>()
+        val calcCorrectResults = mutableListOf<Double>()
+        val oracleBadResults = mutableListOf<Double>()
+        val calcBadResults = mutableListOf<Double>()
         // Generate the expressions
-        val tests = 500000
+        val tests = 5000000
+        //val tests = 10
         val verbose = false
         // Expression complexity
         val min = 25
@@ -748,7 +733,7 @@ class CalculatorUnitTests {
 
         for (x in 1..tests) {
             // Instantiate the expression state machine builder
-            var expr_builder = ExpressionBuilderStateMachine()
+            val expr_builder = ExpressionBuilderStateMachine()
             // Generate a random integer between 25 and 100 for expression
             val expressionLength = Random.nextInt(max - min + 1) + min
             val expressionComplexity = Random.nextInt(2)
@@ -768,9 +753,9 @@ class CalculatorUnitTests {
                     println("Expression before randomization: $expression")
                 }
                 expr_builder.expression = expr_builder.randomizeCharacters(expr_builder.expression)
-                if (expression.length != expr_builder.expression.length)
-                    expression = expr_builder.randomizeCharacters(expression)
-                else expression = expr_builder.expression
+                expression = if (expression.length != expr_builder.expression.length)
+                    expr_builder.randomizeCharacters(expression)
+                    else expr_builder.expression
             }
             else if (verbose) println("This is a good expression")
             if (verbose) {
@@ -807,7 +792,7 @@ class CalculatorUnitTests {
 
         // Output the Test Analysis
         expressionTestAnalysis(oracleCorrectResults, oracleBadResults, calcCorrectResults,
-            calcBadResults, tests, verbose)
+            calcBadResults, tests)
 
     }
 }
