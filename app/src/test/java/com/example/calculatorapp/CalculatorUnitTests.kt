@@ -672,8 +672,11 @@ fun expressionTestAnalysis(oracleCorrectResults: MutableList<Double>,
         else unhandledFailures++
     }
     // Reconcile unhandled failures
-    if (unhandledFailures == 0) unhandledFailures = (ceil((tests/2).toDouble()) - handledFailures).toInt()
-    if (correct + wrong < (tests/2)) unhandledFailures += (tests/2) - (correct + wrong)
+    println("Original Unhandled Failures count: $unhandledFailures")
+    if (unhandledFailures == 0) unhandledFailures = ((tests/2) - handledFailures)
+    else if ((unhandledFailures + handledFailures) < (tests/2))
+        unhandledFailures = ((tests/2) - handledFailures)
+    if ((correct + wrong) < (tests/2)) unhandledFailures += (tests/2) - (correct + wrong)
     println("These are the total bad expressions handled: $handledFailures")
     println("These are the total bad expressions not handled: $unhandledFailures")
 
@@ -719,7 +722,8 @@ class CalculatorUnitTests {
         val oracleBadResults = mutableListOf<Double>()
         val calcBadResults = mutableListOf<Double>()
         // Generate the expressions
-        val tests = 5000000
+        //val tests = 10000000
+        val tests = 7500000
         //val tests = 10
         val verbose = false
         // Expression complexity
