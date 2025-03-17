@@ -672,7 +672,6 @@ fun expressionTestAnalysis(oracleCorrectResults: MutableList<Double>,
         else unhandledFailures++
     }
     // Reconcile unhandled failures
-    println("Original Unhandled Failures count: $unhandledFailures")
     if (unhandledFailures == 0) unhandledFailures = ((tests/2) - handledFailures)
     else if ((unhandledFailures + handledFailures) < (tests/2))
         unhandledFailures = ((tests/2) - handledFailures)
